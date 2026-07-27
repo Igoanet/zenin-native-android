@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,9 +29,13 @@ jobs:
           GRADLE_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=512m"
           _JAVA_OPTIONS: "-Xmx5g"
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: ZENIN-Native-Android
-          path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 7
+      - name: Create Release and upload APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete native-latest --yes 2>/dev/null || true
+          gh release create native-latest \
+            --title "ZENIN Native APK (latest)" \
+            --notes "Native Kotlin Jetpack Compose build" \
+            --prerelease \
+            app/build/outputs/apk/debug/app-debug.apk#ZENIN-Native.apk
