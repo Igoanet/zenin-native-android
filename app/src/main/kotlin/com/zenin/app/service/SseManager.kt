@@ -53,9 +53,14 @@ class SseManager(private val apiClient: ApiClient) {
                     backoff = 2_000L
                     Log.i(TAG, "SSE connected")
 
-                    val source = resp.body?.source() ?: run {
-                        resp.close(); delay(2_000); continue
+                    val body = resp.body
+                    if (body == null) {
+                        resp.close()
+                        delay(2_000)
+                        backoff = minOf(backoff * 2, 30_000L)
+                        continue
                     }
+                    val source = body.source()
 
                     var dataStr = ""
                     try {

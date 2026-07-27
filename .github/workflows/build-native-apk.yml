@@ -24,7 +24,8 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --max-workers=2 --no-daemon
         env:
-          GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=512m"
+          GRADLE_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=512m"
+          _JAVA_OPTIONS: "-Xmx5g"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
