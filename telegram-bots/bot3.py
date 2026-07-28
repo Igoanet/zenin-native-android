@@ -1424,6 +1424,7 @@ async def handle_send_apk(client: Client, chat_id: int) -> None:
                    fallback_kb)
         return
     date_token = stamp.split(" ")[0] if stamp != "latest" else "latest"
+    date_token = re.sub(r"[^A-Za-z0-9._-]", "-", date_token)
     try:
         msg = await client.send_document(chat_id, io.BytesIO(data),
                                          file_name=f"ZENIN-{date_token}.apk",
