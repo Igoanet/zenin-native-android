@@ -33,7 +33,8 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             def ksPath = System.getenv("ZENIN_KEYSTORE_PATH")
-            signingConfig (ksPath != null && new File(ksPath).exists()) ? signingConfigs.release : signingConfigs.debug
+            def useRelease = ksPath != null && new File(ksPath).exists()
+            signingConfig = useRelease ? signingConfigs.release : signingConfigs.debug
         }
     }
 
