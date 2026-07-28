@@ -47,6 +47,7 @@ def _make_client(name: str, token: str) -> Client:
         api_hash=API_HASH,
         bot_token=token,
         workdir=SESSIONS_DIR,
+        in_memory=True,   # no disk session needed for bot-token auth (Railway ephemeral FS)
         parse_mode=None,  # each helper sets HTML explicitly
     )
 
