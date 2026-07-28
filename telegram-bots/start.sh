@@ -45,5 +45,8 @@ else
 fi
 # ─────────────────────────────────────────────────────────────────────────────
 
+echo "[bots] Running database migrations..."
+python3 migrate.py
+
 echo "[bots] Starting Zenin Telegram bot service..."
 exec python3 main.py
