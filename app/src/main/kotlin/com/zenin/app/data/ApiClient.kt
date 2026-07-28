@@ -2,6 +2,8 @@ package com.zenin.app.data
 
 import android.util.Log
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.google.gson.reflect.TypeToken
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -45,8 +47,8 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
         }
     }
 
-    private inline fun <reified T> execute(req: Request): Result<T> {
-        return try {
+    private suspend inline fun <reified T> execute(req: Request): Result<T> = withContext(Dispatchers.IO) {
+        try {
             val resp = client.newCall(req).execute()
             val body = resp.body?.string() ?: ""
             if (resp.isSuccessful) {
@@ -65,7 +67,7 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
 
     suspend fun login(username: String, password: String): LoginResult {
         val req = request("POST", "/auth/login", mapOf("username" to username, "password" to password))
-        return try {
+        return withContext(Dispatchers.IO) { try {
             val resp = client.newCall(req).execute()
             val body = resp.body?.string() ?: ""
             val raw = gson.fromJson(body, RawLoginResponse::class.java)
@@ -80,13 +82,13 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
                 else -> LoginResult.Error("Unexpected response")
             }
         } catch (e: Exception) {
-            LoginResult.Error("Connection failed: ${e.message}")
-        }
+            LoginResult.Error("Connection failed: ${e.message ?: e.javaClass.simpleName}")
+        } }
     }
 
     suspend fun verifyOtp(otpId: String, otp: String): OtpResult {
         val req = request("POST", "/auth/otp/verify", mapOf("otpId" to otpId, "otp" to otp))
-        return try {
+        return withContext(Dispatchers.IO) { try {
             val resp = client.newCall(req).execute()
             val body = resp.body?.string() ?: ""
             val raw = gson.fromJson(body, RawLoginResponse::class.java)
@@ -103,14 +105,14 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
                 else -> OtpResult.Error("Unexpected response")
             }
         } catch (e: Exception) {
-            OtpResult.Error("Connection failed: ${e.message}")
-        }
+            OtpResult.Error("Connection failed: ${e.message ?: e.javaClass.simpleName}")
+        } }
     }
 
     suspend fun evictAndLogin(preAuthId: String, evictEventId: Int): EvictResult {
         val req = request("POST", "/auth/login/evict-and-login",
             mapOf("preAuthId" to preAuthId, "evictEventId" to evictEventId))
-        return try {
+        return withContext(Dispatchers.IO) { try {
             val resp = client.newCall(req).execute()
             val body = resp.body?.string() ?: ""
             val raw = gson.fromJson(body, RawLoginResponse::class.java)
@@ -121,14 +123,16 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
                 else -> EvictResult.Error("Unexpected response")
             }
         } catch (e: Exception) {
-            EvictResult.Error("Connection failed: ${e.message}")
-        }
+            EvictResult.Error("Connection failed: ${e.message ?: e.javaClass.simpleName}")
+        } }
     }
 
     suspend fun logout() {
-        try {
-            client.newCall(request("POST", "/auth/logout")).execute().close()
-        } catch (_: Exception) {}
+        withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request("POST", "/auth/logout")).execute().close()
+            } catch (_: Exception) {}
+        }
     }
 
     suspend fun getSessions(): Result<List<SessionInfo>> {
