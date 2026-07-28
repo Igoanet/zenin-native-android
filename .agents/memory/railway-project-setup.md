@@ -16,3 +16,4 @@ The entire Railway project can be created and managed via `https://backboard.rai
 - Cross-service DB URL: `postgresql://<user>:<pass>@postgres.railway.internal:5432/<db>` works without Railway variable references.
 - Pyrogram Client needs `in_memory=True` — Railway filesystem writes for .sessions fail.
 - The `ghcr.io/railwayapp-templates/postgres-ssl:edge` image fails without clear logs; plain `postgres:15` works.
+- To debug the DB from outside Railway: `tcpProxyCreate(input: {serviceId, environmentId, applicationPort: 5432})` gives a public host:port for psql; delete it afterward with `tcpProxyDelete(id)` — it's a public DB port.
