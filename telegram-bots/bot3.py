@@ -1341,16 +1341,29 @@ async def handle_get_credential(client: Client, chat_id: int) -> None:
 # instead of serving a stale file.
 _APK_FILE_IDS: dict[str, str] = {}
 
+# Telegram rejects bot document uploads around 50 MB — refuse to download
+# anything near that so a bad/changed URL can't blow up memory either.
+_MAX_APK_BYTES = 45 * 1024 * 1024
 
-async def _apk_cache_key() -> str:
+
+async def _apk_cache_key() -> Optional[str]:
+    """Stable identity for the asset behind APK_URL, or None to skip caching.
+
+    GitHub release URLs 302-redirect to the real asset, and the validators
+    (ETag / Last-Modified) only exist on the final response — so redirects
+    must be followed. If the server gives us no validator, we return None so
+    callers never cache (and never serve a stale APK) under a constant key.
+    """
     try:
         timeout = aiohttp.ClientTimeout(total=20)
         async with aiohttp.ClientSession(timeout=timeout) as sess:
-            async with sess.head(APK_URL) as resp:
-                etag = resp.headers.get("ETag") or resp.headers.get("Last-Modified") or ""
-                return f"{APK_URL}|{etag}"
+            async with sess.head(APK_URL, allow_redirects=True) as resp:
+                validator = resp.headers.get("ETag") or resp.headers.get("Last-Modified")
+                if not validator:
+                    return None
+                return f"{resp.url}|{validator}"
     except Exception:
-        return APK_URL
+        return None
 
 
 async def handle_send_apk(client: Client, chat_id: int) -> None:
@@ -1362,7 +1375,7 @@ async def handle_send_apk(client: Client, chat_id: int) -> None:
                "<b>password</b> from Get Credentials.")
     fallback_kb = [[btn("📱 Download ZENIN App (browser)", url=APK_URL)]]
     key = await _apk_cache_key()
-    cached = _APK_FILE_IDS.get(key)
+    cached = _APK_FILE_IDS.get(key) if key else None
     if cached:
         try:
             await client.send_document(chat_id, cached, caption=caption,
@@ -1377,7 +1390,15 @@ async def handle_send_apk(client: Client, chat_id: int) -> None:
             async with sess.get(APK_URL) as resp:
                 if resp.status != 200:
                     raise RuntimeError(f"HTTP {resp.status}")
-                data = await resp.read()
+                declared = resp.content_length
+                if declared is not None and declared > _MAX_APK_BYTES:
+                    raise RuntimeError(f"APK too large ({declared} bytes)")
+                buf = bytearray()
+                async for chunk in resp.content.iter_chunked(1 << 20):
+                    buf += chunk
+                    if len(buf) > _MAX_APK_BYTES:
+                        raise RuntimeError("APK exceeds size cap while streaming")
+                data = bytes(buf)
     except Exception as e:
         log.warning("APK download failed: %s", e)
         await send(client, chat_id,
@@ -1388,7 +1409,7 @@ async def handle_send_apk(client: Client, chat_id: int) -> None:
         msg = await client.send_document(chat_id, io.BytesIO(data),
                                          file_name="ZENIN.apk", caption=caption,
                                          parse_mode=ParseMode.HTML)
-        if msg and msg.document:
+        if msg and msg.document and key:
             _APK_FILE_IDS[key] = msg.document.file_id
     except Exception as e:
         log.warning("APK upload failed: %s", e)
