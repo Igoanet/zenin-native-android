@@ -1323,10 +1323,8 @@ async def handle_get_credential(client: Client, chat_id: int) -> None:
                f"<b>Password:</b> <code>{_esc(password)}</code>\n"
                f"<b>Role:</b> {role_label(u['role'])}\n"
                f"{exp_line}\n"
-               f"{footer}\n\n"
-               f"🌐 <b>Dashboard:</b> <a href=\"{DASHBOARD_URL}\">{DASHBOARD_URL}</a>",
+               f"{footer}",
                apk_row if apk_row else None)
-    await send_dashboard_shortcut(client, chat_id, DASHBOARD_URL)
 
 
 async def handle_change_password_start(client: Client, chat_id: int) -> None:
