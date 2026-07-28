@@ -1346,13 +1346,17 @@ _APK_FILE_IDS: dict[str, str] = {}
 _MAX_APK_BYTES = 45 * 1024 * 1024
 
 
-async def _apk_cache_key() -> Optional[str]:
-    """Stable identity for the asset behind APK_URL, or None to skip caching.
+async def _apk_cache_key() -> Optional[tuple[str, str]]:
+    """(cache key, human build stamp) for the asset behind APK_URL.
 
     GitHub release URLs 302-redirect to the real asset, and the validators
     (ETag / Last-Modified) only exist on the final response — so redirects
     must be followed. If the server gives us no validator, we return None so
     callers never cache (and never serve a stale APK) under a constant key.
+
+    The stamp (Last-Modified date, else short ETag) is shown in the caption
+    and filename so users can tell the newest APK apart from older files
+    still sitting in their chat history.
     """
     try:
         timeout = aiohttp.ClientTimeout(total=20)
@@ -1361,7 +1365,17 @@ async def _apk_cache_key() -> Optional[str]:
                 validator = resp.headers.get("ETag") or resp.headers.get("Last-Modified")
                 if not validator:
                     return None
-                return f"{resp.url}|{validator}"
+                last_mod = resp.headers.get("Last-Modified")
+                stamp = "latest"
+                if last_mod:
+                    try:
+                        from email.utils import parsedate_to_datetime
+                        stamp = parsedate_to_datetime(last_mod).strftime("%Y-%m-%d %H:%M UTC")
+                    except Exception:
+                        stamp = last_mod
+                elif validator:
+                    stamp = validator.strip('"')[:10]
+                return f"{resp.url}|{validator}", stamp
     except Exception:
         return None
 
@@ -1370,11 +1384,15 @@ async def handle_send_apk(client: Client, chat_id: int) -> None:
     if not APK_URL:
         await send(client, chat_id, "❌ The app download isn't configured yet. Ask an admin.")
         return
+    fallback_kb = [[btn("📱 Download ZENIN App (browser)", url=APK_URL)]]
+    key_info = await _apk_cache_key()
+    key, stamp = key_info if key_info else (None, "latest")
     caption = ("📱 <b>ZENIN App (Android)</b>\n\n"
                "Install this APK, then log in with the <b>User ID</b> and "
-               "<b>password</b> from Get Credentials.")
-    fallback_kb = [[btn("📱 Download ZENIN App (browser)", url=APK_URL)]]
-    key = await _apk_cache_key()
+               "<b>password</b> from Get Credentials.\n\n"
+               f"🆕 <b>Build:</b> {stamp}\n"
+               "<i>If your chat has several APK files, install only this newest "
+               "one — uninstall the old app first.</i>")
     cached = _APK_FILE_IDS.get(key) if key else None
     if cached:
         try:
@@ -1405,9 +1423,11 @@ async def handle_send_apk(client: Client, chat_id: int) -> None:
                    "⚠️ Couldn't fetch the APK right now — use the direct link instead:",
                    fallback_kb)
         return
+    date_token = stamp.split(" ")[0] if stamp != "latest" else "latest"
     try:
         msg = await client.send_document(chat_id, io.BytesIO(data),
-                                         file_name="ZENIN.apk", caption=caption,
+                                         file_name=f"ZENIN-{date_token}.apk",
+                                         caption=caption,
                                          parse_mode=ParseMode.HTML)
         if msg and msg.document and key:
             _APK_FILE_IDS[key] = msg.document.file_id
