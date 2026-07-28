@@ -39,6 +39,9 @@ TABLES = [
 ]
 
 MIGRATIONS = [
+    # pgcrypto provides gen_random_uuid() on PG < 13; harmless no-op on PG 13+
+    "CREATE EXTENSION IF NOT EXISTS pgcrypto",
+
     # ── users (union of bot + drizzle) ────────────────────────────────────────
     """
     CREATE TABLE IF NOT EXISTS users (
@@ -238,18 +241,46 @@ MIGRATIONS = [
     """,
 ]
 
+# Convergence pass: CREATE TABLE IF NOT EXISTS does nothing for tables that
+# already exist with an older/partial shape, so upgrade them in place.
+CONVERGENCE = [
+    # users — ensure every union column exists
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS id TEXT',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS tg_chat_id TEXT',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS panel_password TEXT',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS password_backfill_notified BOOLEAN NOT NULL DEFAULT false',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS tg_username TEXT',
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0',
+    "ALTER TABLE users ALTER COLUMN id SET DEFAULT gen_random_uuid()::text",
+    # access_keys — both naming conventions + bot's redeemed_at
+    'ALTER TABLE access_keys ADD COLUMN IF NOT EXISTS key TEXT',
+    'ALTER TABLE access_keys ADD COLUMN IF NOT EXISTS code TEXT',
+    'ALTER TABLE access_keys ADD COLUMN IF NOT EXISTS redeemed_at TIMESTAMPTZ',
+    # role_events — both timestamp conventions
+    'ALTER TABLE role_events ADD COLUMN IF NOT EXISTS ts TIMESTAMPTZ NOT NULL DEFAULT now()',
+    'ALTER TABLE role_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()',
+    # required_channels — drizzle column the bot-era table may lack
+    'ALTER TABLE required_channels ADD COLUMN IF NOT EXISTS added_by_tg_uid BIGINT NOT NULL DEFAULT 0',
+]
+
 
 async def run() -> None:
     log.info("connecting to database …")
     conn = await psycopg.AsyncConnection.connect(DATABASE_URL, autocommit=True)
     async with conn:
         if os.environ.get("DB_RESET") == "1":
-            log.warning("DB_RESET=1 — dropping all tables (one-time fresh setup)")
+            # Destructive reset requires TWO independent confirmations so a
+            # leftover env var alone can never wipe data on an ordinary boot.
+            if os.environ.get("DB_RESET_CONFIRM") != "WIPE":
+                log.error("DB_RESET=1 but DB_RESET_CONFIRM != WIPE — refusing to drop tables")
+                sys.exit(1)
+            log.warning("DB_RESET confirmed — dropping all tables (one-time fresh setup)")
             for t in TABLES:
                 await conn.execute(f'DROP TABLE IF EXISTS "{t}" CASCADE')
             await conn.execute("DROP FUNCTION IF EXISTS sync_access_key_code() CASCADE")
             log.warning("all tables dropped")
-        for stmt in MIGRATIONS:
+        for stmt in MIGRATIONS + CONVERGENCE:
             sql = stmt.strip()
             label = sql.split("\n")[0][:80]
             try:
