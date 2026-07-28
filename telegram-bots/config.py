@@ -203,7 +203,7 @@ SESSIONS_DIR = os.path.join(os.path.dirname(__file__), ".sessions")
 # Defaults to the GitHub Release so it works even before Railway has the file.
 APK_URL = os.environ.get(
     "APK_URL",
-    "https://github.com/Igoanet/zenin-native-android/releases/download/native-latest/ZENIN-Native.apk",
+    "https://github.com/Igoanet/zenin-native-android/releases/download/native-latest/app-release.apk",
 )
 
 # Public-facing dashboard URL sent as a .url shortcut file after account creation
