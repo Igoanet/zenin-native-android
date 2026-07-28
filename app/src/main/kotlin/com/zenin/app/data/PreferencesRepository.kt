@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "zenin_settings")
 
 private val KEY_API_URL = stringPreferencesKey("api_base_url")
-const val DEFAULT_API_URL = "https://api-server-production-5907.up.railway.app/api"
+const val DEFAULT_API_URL = "https://api-server-production-9692.up.railway.app/api"
 
 class PreferencesRepository(private val context: Context) {
 
