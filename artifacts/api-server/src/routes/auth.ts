@@ -143,6 +143,11 @@ router.post("/login", async (req: Request, res: Response) => {
     // Accept either the web `username` field OR the bot-issued panel `userId`
     // (bot-created accounts have username = null but always have a userId).
     const trimmed = username.trim();
+    // Trim the password too: credentials are almost always copy-pasted from
+    // Telegram, which loves to attach a trailing space/newline — and bot
+    // policy forbids spaces in passwords anyway, so trimming can never
+    // reject a legitimately-set password.
+    const pwd = password.trim();
     const [user] = await db
       .select()
       .from(users)
@@ -150,14 +155,16 @@ router.post("/login", async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user) {
+      console.log(`[login] 401: no user for '${trimmed.slice(0, 20)}'`);
       // Perform a dummy hash to equalize timing
-      await verifyPassword(password, "a".repeat(128), "a".repeat(64));
+      await verifyPassword(pwd, "a".repeat(128), "a".repeat(64));
       res.status(401).json({ error: genericError });
       return;
     }
 
-    const valid = await verifyPassword(password, user.passwordHash, user.passwordSalt);
+    const valid = await verifyPassword(pwd, user.passwordHash, user.passwordSalt);
     if (!valid) {
+      console.log(`[login] 401: bad password for userId=${user.userId} (pwd len ${pwd.length})`);
       res.status(401).json({ error: genericError });
       return;
     }
@@ -165,7 +172,7 @@ router.post("/login", async (req: Request, res: Response) => {
     // Transparent Argon2id rehash — upgrade legacy scrypt hashes silently.
     // Fire-and-forget: runs in the background so login latency is unaffected.
     if (needsRehash(user.passwordHash)) {
-      hashPassword(password)
+      hashPassword(pwd)
         .then(({ hash, salt }) =>
           db
             .update(users)

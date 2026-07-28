@@ -37,7 +37,7 @@ class AuthViewModel : ViewModel() {
         }
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            _uiState.value = when (val result = api.login(username.trim(), password)) {
+            _uiState.value = when (val result = api.login(username.trim(), password.trim())) {
                 is LoginResult.Success -> {
                     authRepo.saveSession(result.token, result.user)
                     app.sseManager.start(result.token, app.appScope)
