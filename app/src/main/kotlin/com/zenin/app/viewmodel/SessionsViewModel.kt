@@ -46,4 +46,15 @@ class SessionsViewModel : ViewModel() {
                 }
         }
     }
+
+    fun terminateOthers() {
+        viewModelScope.launch {
+            _state.update { it.copy(revokingId = -1) }
+            app.apiClient.terminateOtherSessions()
+                .onSuccess { loadSessions() }
+                .onFailure { e ->
+                    _state.update { it.copy(revokingId = null, error = "Failed: ${e.message}") }
+                }
+        }
+    }
 }

@@ -183,6 +183,23 @@ data class SmsMessage(
     val ts: Long = 0L
 )
 
+// ─── Settings / Panel Models ─────────────────────────────────────────────────
+
+data class NotifySettings(
+    val transaction: Boolean = false,
+    val login: Boolean = false,
+    val onlineOffline: Boolean = false,
+    val enabledAt: Long? = null
+)
+
+data class PanelConfigInfo(
+    val id: String = "",
+    val name: String = "",
+    val firebaseUrl: String = "",
+    val isActive: Boolean = true,
+    val createdAt: String = ""
+)
+
 // ─── SSE Event Models ─────────────────────────────────────────────────────────
 
 sealed class SseEvent {
@@ -222,6 +239,31 @@ internal data class RawSessionsResponse(
 
 internal data class RawUpiPinResponse(
     val pin: String? = null
+)
+
+internal data class RawMeResponse(
+    val user: UserProfile? = null,
+    val error: String? = null
+)
+
+internal data class RawNotifySettingsResponse(
+    val settings: Map<String, NotifySettings>? = null
+)
+
+internal data class RawPanelConfigsResponse(
+    val configs: List<PanelConfigInfo>? = null,
+    val error: String? = null
+)
+
+internal data class RawShareLinkResponse(
+    val token: String? = null,
+    val error: String? = null
+)
+
+internal data class RawOkResponse(
+    val ok: Boolean? = null,
+    val error: String? = null,
+    val deviceCount: Int? = null
 )
 
 internal data class RawSsePayload(

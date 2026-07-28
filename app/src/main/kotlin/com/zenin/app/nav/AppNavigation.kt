@@ -19,6 +19,7 @@ private const val ROUTE_DASHBOARD = "dashboard"
 private const val ROUTE_DEVICE = "device/{deviceJson}"
 private const val ROUTE_SESSIONS = "sessions"
 private const val ROUTE_SETTINGS = "settings"
+private const val ROUTE_PANELS = "panels"
 
 @Composable
 fun AppNavigation() {
@@ -88,7 +89,14 @@ fun AppNavigation() {
         }
 
         composable(ROUTE_SETTINGS) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onPanelsClick = { navController.navigate(ROUTE_PANELS) }
+            )
+        }
+
+        composable(ROUTE_PANELS) {
+            PanelsScreen(onBack = { navController.popBackStack() })
         }
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.zenin.app.ZeninApp
 import com.zenin.app.data.Device
+import com.zenin.app.data.NotifySettings
 import com.zenin.app.data.SmsMessage
 import com.zenin.app.data.SseEvent
 import kotlinx.coroutines.flow.*
@@ -19,8 +20,12 @@ data class DeviceDetailUiState(
     val upiPin: String? = null,
     val isLoadingUpi: Boolean = false,
     val isDeleted: Boolean = false,
+    val notifySettings: NotifySettings? = null,
+    val shareLink: String? = null,
     val error: String? = null
 )
+
+enum class NotifyKind { TRANSACTION, LOGIN, ONLINE_OFFLINE }
 
 class DeviceDetailViewModel(
     private val deviceId: String,
@@ -35,6 +40,7 @@ class DeviceDetailViewModel(
     init {
         loadSms()
         collectSseEvents()
+        loadNotifySettings()
     }
 
     fun setDevice(device: Device) {
@@ -124,6 +130,49 @@ class DeviceDetailViewModel(
             }
         }
     }
+
+    // ─── Telegram notification preferences (parity with web Settings) ───────
+
+    fun loadNotifySettings() {
+        viewModelScope.launch {
+            app.apiClient.getAllNotifySettings()
+                .onSuccess { map ->
+                    _state.update { it.copy(notifySettings = map[deviceId] ?: NotifySettings()) }
+                }
+        }
+    }
+
+    fun toggleNotify(kind: NotifyKind, enabled: Boolean) {
+        val cur = _state.value.notifySettings ?: NotifySettings()
+        val updated = when (kind) {
+            NotifyKind.TRANSACTION -> cur.copy(transaction = enabled)
+            NotifyKind.LOGIN -> cur.copy(login = enabled)
+            NotifyKind.ONLINE_OFFLINE -> cur.copy(onlineOffline = enabled)
+        }
+        // First time anything is enabled, set the cutoff so historical SMS
+        // don't trigger a flood of notifications (mirrors web enabledAt).
+        val withCutoff =
+            if (cur.enabledAt == null && (updated.transaction || updated.login || updated.onlineOffline))
+                updated.copy(enabledAt = System.currentTimeMillis())
+            else updated
+        _state.update { it.copy(notifySettings = withCutoff) }
+        viewModelScope.launch {
+            app.apiClient.putNotifySettings(deviceId, withCutoff)
+                .onFailure { e -> _state.update { it.copy(sendResult = "Notify save failed: ${e.message}") } }
+        }
+    }
+
+    // ─── Share link (parity with web share) ──────────────────────────────────
+
+    fun shareDevice() {
+        viewModelScope.launch {
+            app.apiClient.generateShareLink(panelId, deviceId, _state.value.device?.name ?: deviceId)
+                .onSuccess { link -> _state.update { it.copy(shareLink = link) } }
+                .onFailure { e -> _state.update { it.copy(sendResult = "Share failed: ${e.message}") } }
+        }
+    }
+
+    fun clearShareLink() { _state.update { it.copy(shareLink = null) } }
 
     class Factory(private val deviceId: String, private val panelId: String) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

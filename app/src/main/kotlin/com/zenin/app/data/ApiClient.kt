@@ -42,6 +42,7 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
         return when (method.uppercase()) {
             "POST" -> rb.post(reqBody ?: "{}".toRequestBody(JSON)).build()
             "PUT" -> rb.put(reqBody ?: "{}".toRequestBody(JSON)).build()
+            "PATCH" -> rb.patch(reqBody ?: "{}".toRequestBody(JSON)).build()
             "DELETE" -> rb.delete(reqBody).build()
             else -> rb.get().build()
         }
@@ -144,6 +145,85 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
     suspend fun revokeSession(id: Int): Result<Unit> {
         val req = request("DELETE", "/auth/sessions/$id")
         return execute<Any>(req).map {}
+    }
+
+    suspend fun terminateOtherSessions(): Result<Unit> {
+        return execute<Any>(request("POST", "/auth/sessions/terminate")).map {}
+    }
+
+    // ─── Profile ─────────────────────────────────────────────────────────────
+
+    suspend fun getMe(): Result<UserProfile> {
+        return execute<RawMeResponse>(request("GET", "/auth/me")).map { it.user ?: UserProfile() }
+    }
+
+    suspend fun updateMe(name: String): Result<UserProfile> {
+        val req = request("PATCH", "/auth/me", mapOf("name" to name))
+        return execute<RawMeResponse>(req).map { it.user ?: UserProfile() }
+    }
+
+    suspend fun changePassword(current: String, new: String): Result<Unit> {
+        val req = request("POST", "/auth/change-password",
+            mapOf("currentPassword" to current, "newPassword" to new))
+        return execute<Any>(req).map {}
+    }
+
+    // ─── Notification preferences ────────────────────────────────────────────
+
+    suspend fun getAllNotifySettings(): Result<Map<String, NotifySettings>> {
+        return execute<RawNotifySettingsResponse>(request("GET", "/notify-settings"))
+            .map { it.settings ?: emptyMap() }
+    }
+
+    suspend fun putNotifySettings(deviceId: String, s: NotifySettings): Result<Unit> {
+        val req = request("PUT", "/notify-settings/${encode(deviceId)}", mapOf(
+            "transaction" to s.transaction,
+            "login" to s.login,
+            "onlineOffline" to s.onlineOffline,
+            "enabledAt" to s.enabledAt
+        ))
+        return execute<Any>(req).map {}
+    }
+
+    // ─── Device share links ──────────────────────────────────────────────────
+
+    suspend fun generateShareLink(panelId: String, deviceId: String, deviceName: String): Result<String> {
+        val req = request("POST", "/share/generate-link",
+            mapOf("panelId" to panelId, "deviceId" to deviceId, "deviceName" to deviceName))
+        return execute<RawShareLinkResponse>(req).mapCatching { resp ->
+            val token = resp.token ?: throw ApiException(500, resp.error ?: "No share token returned")
+            "${baseUrl.trimEnd('/').removeSuffix("/api")}/zenin/share/$token"
+        }
+    }
+
+    // ─── Panel configs ───────────────────────────────────────────────────────
+
+    suspend fun getPanelConfigs(): Result<List<PanelConfigInfo>> {
+        return execute<RawPanelConfigsResponse>(request("GET", "/panel/configs"))
+            .map { it.configs ?: emptyList() }
+    }
+
+    suspend fun addPanelConfig(name: String, firebaseUrl: String, firebaseSecret: String): Result<Unit> {
+        val req = request("POST", "/panel/configs",
+            mapOf("name" to name, "firebaseUrl" to firebaseUrl, "firebaseSecret" to firebaseSecret))
+        return execute<Any>(req).map {}
+    }
+
+    suspend fun updatePanelConfig(id: String, name: String?, isActive: Boolean?, firebaseSecret: String?): Result<Unit> {
+        val body = mutableMapOf<String, Any>()
+        name?.let { body["name"] = it }
+        isActive?.let { body["isActive"] = it }
+        firebaseSecret?.let { body["firebaseSecret"] = it }
+        return execute<Any>(request("PATCH", "/panel/configs/${encode(id)}", body)).map {}
+    }
+
+    suspend fun deletePanelConfig(id: String): Result<Unit> {
+        return execute<Any>(request("DELETE", "/panel/configs/${encode(id)}")).map {}
+    }
+
+    suspend fun testPanelConfig(id: String): Result<Int> {
+        return execute<RawOkResponse>(request("POST", "/panel/configs/${encode(id)}/test"))
+            .map { it.deviceCount ?: 0 }
     }
 
     // ─── Devices ─────────────────────────────────────────────────────────────

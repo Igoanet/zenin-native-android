@@ -84,6 +84,18 @@ fun SessionsScreen(
                     Spacer(Modifier.height(4.dp))
                 }
 
+                if (state.sessions.size > 1) {
+                    item {
+                        ZeninOutlinedButton(
+                            text = "TERMINATE ALL OTHER SESSIONS",
+                            onClick = { vm.terminateOthers() },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = state.revokingId == null
+                        )
+                        Spacer(Modifier.height(4.dp))
+                    }
+                }
+
                 items(state.sessions, key = { it.id }) { session ->
                     SessionCard(
                         session = session,
