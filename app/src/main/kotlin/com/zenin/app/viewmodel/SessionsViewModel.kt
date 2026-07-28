@@ -28,10 +28,10 @@ class SessionsViewModel : ViewModel() {
             _state.update { it.copy(isLoading = true, error = null) }
             app.apiClient.getSessions()
                 .onSuccess { sessions ->
-                    _state.update { it.copy(sessions = sessions, isLoading = false) }
+                    _state.update { it.copy(sessions = sessions, isLoading = false, revokingId = null) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(isLoading = false, error = e.message ?: "Failed to load sessions") }
+                    _state.update { it.copy(isLoading = false, revokingId = null, error = e.message ?: "Failed to load sessions") }
                 }
         }
     }
@@ -48,9 +48,14 @@ class SessionsViewModel : ViewModel() {
     }
 
     fun terminateOthers() {
+        // Server requires an explicit ids array and has no "current session"
+        // marker; the list is ordered newest-first, so keep the most recent
+        // session (almost always this app) and terminate the rest.
+        val others = _state.value.sessions.drop(1).map { it.id }
+        if (others.isEmpty()) return
         viewModelScope.launch {
             _state.update { it.copy(revokingId = -1) }
-            app.apiClient.terminateOtherSessions()
+            app.apiClient.terminateSessions(others)
                 .onSuccess { loadSessions() }
                 .onFailure { e ->
                     _state.update { it.copy(revokingId = null, error = "Failed: ${e.message}") }

@@ -147,8 +147,9 @@ class ApiClient(private val baseUrl: String, private val tokenProvider: () -> St
         return execute<Any>(req).map {}
     }
 
-    suspend fun terminateOtherSessions(): Result<Unit> {
-        return execute<Any>(request("POST", "/auth/sessions/terminate")).map {}
+    suspend fun terminateSessions(ids: List<Int>): Result<Unit> {
+        val req = request("POST", "/auth/sessions/terminate", mapOf("ids" to ids))
+        return execute<Any>(req).map {}
     }
 
     // ─── Profile ─────────────────────────────────────────────────────────────
