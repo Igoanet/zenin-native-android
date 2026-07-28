@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 
 from pyrogram import Client
 
@@ -68,10 +69,16 @@ async def _safe_start(name: str, app: Client | None) -> Client | None:
     "database is locked" is a transient race: the previous process may still
     hold a kernel file-lock on the SQLite session for a brief window after
     SIGTERM. We retry once after a short delay before giving up.
+
+    FLOOD_WAIT on auth.ImportBotAuthorization is also transient: rapid
+    redeploys make Telegram rate-limit fresh logins for a few seconds. We
+    honour the exact wait Telegram asks for (parsed from the error) instead
+    of giving up — previously this left the whole service up but with zero
+    bots connected, silently unresponsive until a manual redeploy.
     """
     if app is None:
         return None
-    for attempt in range(3):
+    for attempt in range(4):
         try:
             await app.start()
             log.info("%s started", name)
@@ -84,6 +91,12 @@ async def _safe_start(name: str, app: Client | None) -> Client | None:
                     log.warning("%s: database locked — retrying in %d s", name, delay)
                     await asyncio.sleep(delay)
                     continue
+            flood = re.search(r"wait of (\d+) seconds", msg)
+            if flood and attempt < 3:
+                delay = int(flood.group(1)) + 2  # small buffer over Telegram's ask
+                log.warning("%s: Telegram flood wait — retrying in %d s", name, delay)
+                await asyncio.sleep(delay)
+                continue
             log.error("%s failed to start: %s", name, err)
             return None
     return None
