@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Pyrogram sessions
+*.session
+*.session-journal
+.sessions/
+
+# Runtime socket / pid
+.runtime/
+
+# Local env
+.env
+
+# Store data (contains user data at runtime)
+data/store.json
+data/bot-store.json
+data/*.tmp
+data/*.json
+
+# Logs
+*.log
+
+# OS
+.DS_Store

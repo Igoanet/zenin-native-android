@@ -1,0 +1,5 @@
+pyrogram==2.0.106
+tgcrypto==1.2.5
+psycopg[binary]==3.3.4
+aiohttp==3.14.0
+g4f[api]
