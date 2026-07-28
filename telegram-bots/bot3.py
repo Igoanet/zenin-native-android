@@ -13,6 +13,7 @@ credentials minted here log in on the panel.
 from __future__ import annotations
 
 import asyncio
+import io
 import logging
 import re
 import secrets
@@ -21,9 +22,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+import aiohttp
 import psycopg
 from pyrogram import Client, filters
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ChatAction, ParseMode
 from pyrogram.handlers import CallbackQueryHandler, MessageHandler
 
 import db
@@ -1316,7 +1318,9 @@ async def handle_get_credential(client: Client, chat_id: int) -> None:
               if newly_issued else
               "This is your current panel password. Use <b>Change Password</b> "
               "if you want a new one.")
-    apk_row = [[btn("📱 Download ZENIN App (Android)", url=APK_URL)]] if APK_URL else []
+    # The APK button delivers the file straight into this chat (see
+    # handle_send_apk) instead of bouncing the user out to a browser.
+    apk_row = [[btn("📱 Get ZENIN App (APK)", cb="apk")]] if APK_URL else []
     await send(client, chat_id,
                "🔐 <b>Panel credentials</b>\n\n"
                f"<b>User ID:</b> <code>{u['user_id']}</code>\n"
@@ -1325,6 +1329,72 @@ async def handle_get_credential(client: Client, chat_id: int) -> None:
                f"{exp_line}\n"
                f"{footer}",
                apk_row if apk_row else None)
+
+
+# ─── Direct APK delivery ────────────────────────────────────────────────────
+# Telegram bots can send documents up to ~50 MB; the release APK is ~12 MB, so
+# we attach it straight into the chat instead of making the user open a
+# browser. After the first successful upload we cache the Telegram file_id so
+# repeat taps are instant. The release URL is stable while the asset behind it
+# changes on every CI build, so the cache key includes the asset's ETag (from
+# a cheap HEAD request) — a rebuilt APK gets a new ETag and is re-uploaded
+# instead of serving a stale file.
+_APK_FILE_IDS: dict[str, str] = {}
+
+
+async def _apk_cache_key() -> str:
+    try:
+        timeout = aiohttp.ClientTimeout(total=20)
+        async with aiohttp.ClientSession(timeout=timeout) as sess:
+            async with sess.head(APK_URL) as resp:
+                etag = resp.headers.get("ETag") or resp.headers.get("Last-Modified") or ""
+                return f"{APK_URL}|{etag}"
+    except Exception:
+        return APK_URL
+
+
+async def handle_send_apk(client: Client, chat_id: int) -> None:
+    if not APK_URL:
+        await send(client, chat_id, "❌ The app download isn't configured yet. Ask an admin.")
+        return
+    caption = ("📱 <b>ZENIN App (Android)</b>\n\n"
+               "Install this APK, then log in with the <b>User ID</b> and "
+               "<b>password</b> from Get Credentials.")
+    fallback_kb = [[btn("📱 Download ZENIN App (browser)", url=APK_URL)]]
+    key = await _apk_cache_key()
+    cached = _APK_FILE_IDS.get(key)
+    if cached:
+        try:
+            await client.send_document(chat_id, cached, caption=caption,
+                                       parse_mode=ParseMode.HTML)
+            return
+        except Exception:
+            _APK_FILE_IDS.pop(key, None)  # expired id — fall through to re-upload
+    await client.send_chat_action(chat_id, ChatAction.UPLOAD_DOCUMENT)
+    try:
+        timeout = aiohttp.ClientTimeout(total=180)
+        async with aiohttp.ClientSession(timeout=timeout) as sess:
+            async with sess.get(APK_URL) as resp:
+                if resp.status != 200:
+                    raise RuntimeError(f"HTTP {resp.status}")
+                data = await resp.read()
+    except Exception as e:
+        log.warning("APK download failed: %s", e)
+        await send(client, chat_id,
+                   "⚠️ Couldn't fetch the APK right now — use the direct link instead:",
+                   fallback_kb)
+        return
+    try:
+        msg = await client.send_document(chat_id, io.BytesIO(data),
+                                         file_name="ZENIN.apk", caption=caption,
+                                         parse_mode=ParseMode.HTML)
+        if msg and msg.document:
+            _APK_FILE_IDS[key] = msg.document.file_id
+    except Exception as e:
+        log.warning("APK upload failed: %s", e)
+        await send(client, chat_id,
+                   "⚠️ Couldn't send the APK file — use the direct link instead:",
+                   fallback_kb)
 
 
 async def handle_change_password_start(client: Client, chat_id: int) -> None:
@@ -2144,6 +2214,14 @@ async def _on_callback(client: Client, cq) -> None:
             return
         await handle_get_credential(client, chat_id)
         await send_main_menu(client, chat_id)
+        return
+
+    if data == "apk":
+        role = await _cb_gate(cq, ["owner", "dev_admin", "base_admin", "user"])
+        await cq.answer("Preparing your APK…")
+        if not role:
+            return
+        await handle_send_apk(client, chat_id)
         return
 
     if data == "cpw":
